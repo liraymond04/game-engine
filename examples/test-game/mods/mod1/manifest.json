@@ -1,0 +1,7 @@
+{
+  "name": "Mod 1",
+  "version": "1.0",
+  "author": "Your Name",
+  "description": "Description of Mod 1",
+  "dependencies": [ "core-mod" ]
+}
