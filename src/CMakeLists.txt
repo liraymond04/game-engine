@@ -36,9 +36,10 @@ file(GLOB SRC_FILES "${SRC_DIR}/engine/*.c" "${SRC_DIR}/engine/*/*.c")
 
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
-# find_static_library(luajit-5.1 LUAJIT)
+find_static_library(luajit-5.1 LUAJIT)
+find_static_library(json-c JSON)
 
-target_link_libraries(${PROJECT_NAME} raylib -lm /home/liray/sources/LuaJIT/src/libluajit.a json-c)
+target_link_libraries(${PROJECT_NAME} raylib -lm ${LUAJIT} ${JSON})
 
 # Web Configurations
 if (EMSCRIPTEN)
