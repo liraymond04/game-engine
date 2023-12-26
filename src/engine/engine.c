@@ -35,6 +35,7 @@ void Engine_Init(Engine_t *engine, int canvasWidth, int canvasHeight, int scale,
     for (int i = 0; i < HOOK_COUNT; i++) {
         Engine_InitHook(&engine->hooks[i]);
     }
+    engine->key_enums = zcreate_hash_table();
 
     Engine_InitLua(engine);
 
@@ -125,6 +126,7 @@ void Engine_Cleanup(Engine_t *engine) {
     Engine_CloseLua(engine);
 
     zfree_hash_table(engine->loaded_mods);
+    zfree_hash_table(engine->key_enums);
 
     CloseWindow();
 }

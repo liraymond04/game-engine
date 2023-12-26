@@ -31,6 +31,7 @@ typedef struct Engine {
     lua_State *L;
 
     struct ZHashTable *loaded_mods;
+    struct ZHashTable *key_enums;
 
     Scene_t *current_scene;
     Vector2 mouse_pos;

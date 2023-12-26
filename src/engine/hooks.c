@@ -1,5 +1,6 @@
 #include "engine.h"
 #include "hooks.h"
+#include "bindings.h"
 
 void Engine_InitHook(Hook_t *hook) { hook->num_functions = 0; }
 
@@ -48,6 +49,8 @@ void Engine_InitLua(Engine_t *engine) {
     // C function bindings
     lua_pushcfunction(engine->L, RegisterFunction);
     lua_setglobal(engine->L, "RegisterFunction");
+
+    Engine_BindCFunctions(engine);
 }
 
 bool LoadMod(Engine_t *engine, const char *mod_dir, const char *mod_name) {
