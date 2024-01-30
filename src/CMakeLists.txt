@@ -39,7 +39,7 @@ add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 find_static_library(luajit-5.1 LUAJIT)
 find_static_library(json-c JSON)
 
-target_link_libraries(${PROJECT_NAME} raylib -lm ${LUAJIT} ${JSON})
+target_link_libraries(${PROJECT_NAME} raylib pthread -lm ${LUAJIT} ${JSON})
 
 # Web Configurations
 if (EMSCRIPTEN)

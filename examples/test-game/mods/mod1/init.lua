@@ -1,7 +1,12 @@
 print("Mod 1 Loaded!")
 
-local player_x = 20
-local player_y = 20
+-- declare persistent variable
+local function dec_p(variable, default)
+    _G[variable] = _G[variable] or default
+end
+
+dec_p("player_x", 20) -- player_x = player_x or 20
+dec_p("player_y", 20)
 
 local player_speed = 4.0
 

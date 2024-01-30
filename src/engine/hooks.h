@@ -10,13 +10,12 @@
 #include <luajit-2.1/lualib.h>
 #include <luajit-2.1/lauxlib.h>
 #include <json-c/json.h>
+#include "zhash-c/zsorted_hash.h"
 
 typedef struct Engine Engine_t;
 
-#define MAX_HOOK_FUNCTIONS 99
-
 typedef struct {
-    int functions[MAX_HOOK_FUNCTIONS];
+    struct ZSortedHashTable *functions;
     size_t num_functions;
 } Hook_t;
 

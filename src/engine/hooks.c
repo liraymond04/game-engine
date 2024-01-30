@@ -2,12 +2,22 @@
 #include "hooks.h"
 #include "bindings.h"
 
-void Engine_InitHook(Hook_t *hook) { hook->num_functions = 0; }
+#define DMON_IMPL
+#include "dmon.h"
+
+void Engine_InitHook(Hook_t *hook) {
+    hook->functions = zcreate_sorted_hash_table();
+    hook->num_functions = 0;
+}
 
 void Engine_RunHook(Engine_t *engine, Hook_t *hook) {
-    for (int i = 0; i < hook->num_functions; i++) {
-        if (hook->functions[i] != LUA_NOREF) {
-            lua_rawgeti(engine->L, LUA_REGISTRYINDEX, hook->functions[i]);
+    struct ZIterator *iterator;
+    for (iterator = zcreate_iterator(hook->functions);
+         ziterator_exists(iterator); ziterator_next(iterator)) {
+        int lua_function_ref = (int)(size_t)ziterator_get_val(iterator);
+
+        if (lua_function_ref != LUA_NOREF) {
+            lua_rawgeti(engine->L, LUA_REGISTRYINDEX, lua_function_ref);
 
             if (lua_pcall(engine->L, 0, 0, 0) != 0) {
                 fprintf(stderr, "Error calling Lua function: %s\n",
@@ -20,18 +30,31 @@ void Engine_RunHook(Engine_t *engine, Hook_t *hook) {
     }
 }
 
+const char *get_current_file_name(lua_State *L) {
+    lua_Debug ar;
+    if (lua_getstack(L, 1, &ar) && lua_getinfo(L, "S", &ar)) {
+        if (ar.source) {
+            const char *filename = ar.source + 1;
+            return filename;
+        }
+    }
+    return "";
+}
+
 int RegisterFunction(lua_State *L) {
     Hook_t *hook = (Hook_t *)lua_touserdata(L, 1);
 
     luaL_checktype(L, 2, LUA_TFUNCTION);
     int gLuaFunctionRef = luaL_ref(L, LUA_REGISTRYINDEX);
 
-    if (hook->num_functions < MAX_HOOK_FUNCTIONS) {
-        hook->functions[hook->num_functions++] = gLuaFunctionRef;
-    } else {
-        fprintf(stderr,
-                "Error: Maximum number of functions reached for this hook\n");
+    const char *lua_filename = get_current_file_name(L);
+
+    if (!zsorted_hash_exists(hook->functions, (char *)lua_filename)) {
+        hook->num_functions++;
     }
+
+    zsorted_hash_set(hook->functions, (char *)lua_filename,
+                     (void *)(size_t)gLuaFunctionRef);
 
     return 0;
 }
@@ -53,9 +76,54 @@ void Engine_InitLua(Engine_t *engine) {
     Engine_BindCFunctions(engine);
 }
 
+static Engine_t *cur_engine = NULL;
+
+static void watch_callback(dmon_watch_id watch_id, dmon_action action,
+                           const char *rootdir, const char *filepath,
+                           const char *oldfilepath, void *user) {
+    (void)(user);
+    (void)(watch_id);
+
+    switch (action) {
+    case DMON_ACTION_CREATE:
+        printf("CREATE: [%s]%s\n", rootdir, filepath);
+        break;
+    case DMON_ACTION_DELETE:
+        printf("DELETE: [%s]%s\n", rootdir, filepath);
+        break;
+    case DMON_ACTION_MODIFY:
+        printf("MODIFY: [%s]%s\n", rootdir, filepath);
+        break;
+    case DMON_ACTION_MOVE:
+        printf("MOVE: [%s]%s -> [%s]%s\n", rootdir, oldfilepath, rootdir,
+               filepath);
+        break;
+    }
+
+    char init_path[256];
+    snprintf(init_path, sizeof(init_path), "%sinit.lua", rootdir);
+
+    for (int i = 0; i < HOOK_COUNT; i++) {
+        struct ZSortedHashTable *table = cur_engine->hooks[i].functions;
+        if (zsorted_hash_exists(table, init_path)) {
+            int lua_function_ref =
+                (int)(size_t)zsorted_hash_get(table, init_path);
+            luaL_unref(cur_engine->L, LUA_REGISTRYINDEX, lua_function_ref);
+            break;
+        }
+    }
+
+    bool result = Engine_RunLuaScript(cur_engine, init_path);
+}
+
 bool LoadMod(Engine_t *engine, const char *mod_dir, const char *mod_name) {
     char init_path[256];
     snprintf(init_path, sizeof(init_path), "%s/init.lua", mod_dir);
+    if (!_dmon_init) {
+        dmon_init();
+        cur_engine = engine;
+    }
+    dmon_watch(mod_dir, watch_callback, DMON_WATCHFLAGS_RECURSIVE, NULL);
     bool result = Engine_RunLuaScript(engine, init_path);
     if (result) {
         zhash_set(engine->loaded_mods, (char *)mod_name, (void *)true);
@@ -132,11 +200,17 @@ void Engine_LoadMods(Engine_t *engine) {
 void Engine_CloseLua(Engine_t *engine) {
     // Free saved lua function references
     for (int i = 0; i < HOOK_COUNT; i++) {
-        for (int j = 0; j < engine->hooks[i].num_functions; j++) {
-            luaL_unref(engine->L, LUA_REGISTRYINDEX,
-                       engine->hooks[i].functions[j]);
+        struct ZIterator *iterator;
+        for (iterator = zcreate_iterator(engine->hooks[i].functions);
+             ziterator_exists(iterator); ziterator_next(iterator)) {
+            int lua_function_ref = (int)(size_t)ziterator_get_val(iterator);
+            luaL_unref(engine->L, LUA_REGISTRYINDEX, lua_function_ref);
         }
+        engine->hooks[i].num_functions = 0;
+        zfree_sorted_hash_table(engine->hooks[i].functions);
     }
+
+    dmon_deinit();
 
     lua_close(engine->L);
 }
