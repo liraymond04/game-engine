@@ -8,7 +8,7 @@ bool show_fps = true;
 void UpdateDrawFrame(void *arg);
 
 void Engine_Init(Engine_t *engine, int canvasWidth, int canvasHeight, int scale,
-                 const char *window_name) {
+                 const char *window_name, const char *init_scene_path) {
     engine->canvasWidth = canvasWidth;
     engine->canvasHeight = canvasHeight;
     engine->scale = scale;
@@ -41,6 +41,9 @@ void Engine_Init(Engine_t *engine, int canvasWidth, int canvasHeight, int scale,
 
     engine->loaded_mods = zcreate_hash_table();
     Engine_LoadMods(engine);
+
+    Engine_Scene_Load(engine, init_scene_path);
+    engine->current_scene->interface.Init(engine);
 }
 
 void Engine_Run(Engine_t *engine) {
@@ -113,11 +116,9 @@ void Engine_Cleanup(Engine_t *engine) {
     if (current_scene != NULL) {
         current_scene->interface.Cleanup(engine);
 
-#ifdef _WIN32
-        FreeLibrary(current_scene->libraryHandle);
-#else
-        dlclose(current_scene->library_handle);
-#endif
+        if (current_scene->library_handle) {
+            platform_free_library(current_scene->library_handle);
+        }
 
         free(current_scene);
         engine->current_scene = NULL;

@@ -15,14 +15,7 @@
 #include "hooks.h"
 #include "scene.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#define EXPORT __declspec(dllexport)
-#define DLL_EXTENSION "dll"
-#else
-#define EXPORT
-#define DLL_EXTENSION "so"
-#endif
+#include "platform/platform.h"
 
 #include "zhash-c/zhash.h"
 
@@ -48,7 +41,7 @@ typedef struct Engine {
 } Engine_t;
 
 void Engine_Init(Engine_t *engine, int canvasWidth, int canvasHeight, int scale,
-                 const char *window_name);
+                 const char *window_name, const char *init_scene_path);
 void Engine_Run(Engine_t *engine);
 void Engine_Cleanup(Engine_t *engine);
 

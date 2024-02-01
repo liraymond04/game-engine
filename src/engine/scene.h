@@ -2,7 +2,6 @@
 #define ENGINE_SCENE_H
 
 #include <stdio.h>
-#include <dlfcn.h>
 
 typedef struct Engine Engine_t;
 
