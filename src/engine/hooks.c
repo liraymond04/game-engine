@@ -5,17 +5,7 @@
 #define DMON_IMPL
 #include "dmon.h"
 
-void Engine_InitHooks(Engine_t *engine) {
-    engine->hooks = zcreate_sorted_hash_table();
-
-#define ADD_HOOK(hook_name)                                                    \
-    zsorted_hash_set(engine->hooks, hook_name, (void *)Hook_new())
-
-    ADD_HOOK("HOOK_BEFORE_GAME_UPDATE");
-    ADD_HOOK("HOOK_AFTER_GAME_UPDATE");
-    ADD_HOOK("HOOK_BEFORE_GAME_DRAW");
-    ADD_HOOK("HOOK_AFTER_GAME_DRAW");
-}
+static Engine_t *cur_engine = NULL;
 
 Hook_t *Hook_new() {
     Hook_t *hook = (Hook_t *)malloc(sizeof(Hook_t));
@@ -30,9 +20,25 @@ void Hook_free(Hook_t *hook) {
     hook = NULL;
 }
 
+void Engine_InitHooks(Engine_t *engine) {
+    cur_engine = engine;
+    engine->hooks = zcreate_sorted_hash_table();
+}
+
+Hook_t *Engine_AddHook(Engine_t *engine, const char *hook_name) {
+    if (zsorted_hash_exists(engine->hooks, (char *)hook_name)) {
+        fprintf(stderr, "Hook with this name already exists: %s\n", hook_name);
+        return zsorted_hash_get(engine->hooks, (char *)hook_name);
+    }
+
+    Hook_t *hook = Hook_new();
+    zsorted_hash_set(engine->hooks, (char *)hook_name, hook);
+    return hook;
+}
+
 void Engine_RunHook(Engine_t *engine, const char *hook_name) {
     if (!zsorted_hash_exists(engine->hooks, (char *)hook_name)) {
-        fprintf(stderr, "No hook with this name found: %s\n", hook_name);
+        // fprintf(stderr, "No hook with this name found: %s\n", hook_name);
         return;
     }
 
@@ -69,7 +75,14 @@ const char *get_current_file_name(lua_State *L) {
 }
 
 int RegisterFunction(lua_State *L) {
-    Hook_t *hook = (Hook_t *)lua_touserdata(L, 1);
+    const char *hook_name = luaL_checkstring(L, 1);
+
+    Hook_t *hook;
+    if (zsorted_hash_exists(cur_engine->hooks, (char *)hook_name)) {
+        hook = zsorted_hash_get(cur_engine->hooks, (char *)hook_name);
+    } else {
+        hook = Engine_AddHook(cur_engine, hook_name);
+    }
 
     luaL_checktype(L, 2, LUA_TFUNCTION);
     int gLuaFunctionRef = luaL_ref(L, LUA_REGISTRYINDEX);
@@ -90,23 +103,12 @@ void Engine_InitLua(Engine_t *engine) {
     engine->L = luaL_newstate();
     luaL_openlibs(engine->L);
 
-    // Pass hooks to Lua env
-    struct ZIterator *hook_iterator;
-    for (hook_iterator = zcreate_iterator(engine->hooks);
-         ziterator_exists(hook_iterator); ziterator_next(hook_iterator)) {
-        lua_pushlightuserdata(engine->L,
-                              (Hook_t *)ziterator_get_val(hook_iterator));
-        lua_setglobal(engine->L, ziterator_get_key(hook_iterator));
-    }
-
     // C function bindings
     lua_pushcfunction(engine->L, RegisterFunction);
     lua_setglobal(engine->L, "RegisterFunction");
 
     Engine_BindCFunctions(engine);
 }
-
-static Engine_t *cur_engine = NULL;
 
 static void watch_callback(dmon_watch_id watch_id, dmon_action action,
                            const char *rootdir, const char *filepath,
@@ -154,7 +156,6 @@ bool LoadMod(Engine_t *engine, const char *mod_dir, const char *mod_name) {
     snprintf(init_path, sizeof(init_path), "%s/init.lua", mod_dir);
     if (!_dmon_init) {
         dmon_init();
-        cur_engine = engine;
     }
     dmon_watch(mod_dir, watch_callback, DMON_WATCHFLAGS_RECURSIVE, NULL);
     bool result = Engine_RunLuaScript(engine, init_path);

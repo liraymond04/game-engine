@@ -19,11 +19,12 @@ typedef struct {
     size_t num_functions;
 } Hook_t;
 
-void Engine_InitHooks(Engine_t *engine);
-
 Hook_t *Hook_new();
 void Hook_free(Hook_t *hook);
 
+void Engine_InitHooks(Engine_t *engine);
+
+Hook_t *Engine_AddHook(Engine_t *engine, const char *hook_name);
 void Engine_RunHook(Engine_t *engine, const char *hook_name);
 
 void Engine_InitLua(Engine_t *engine);

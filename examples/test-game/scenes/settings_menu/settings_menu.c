@@ -26,4 +26,6 @@ EXPORT void Draw(Engine_t *engine) {
 
 EXPORT void Cleanup(Engine_t *engine) {
     // Cleanup logic for the main menu
+    Engine_RunHook(engine, "HOOK_BEFORE_SETTINGS_MENU_CLEANUP");
+    Engine_RunHook(engine, "HOOK_AFTER_SETTINGS_MENU_CLEANUP");
 }
