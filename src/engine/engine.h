@@ -18,9 +18,10 @@
 #include "platform/platform.h"
 
 #include "zhash-c/zhash.h"
+#include "zhash-c/zsorted_hash.h"
 
 typedef struct Engine {
-    Hook_t hooks[HOOK_COUNT];
+    struct ZSortedHashTable *hooks;
     lua_State *L;
 
     struct ZHashTable *loaded_mods;

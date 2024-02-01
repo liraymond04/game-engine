@@ -19,26 +19,12 @@ typedef struct {
     size_t num_functions;
 } Hook_t;
 
-void Engine_InitHook(Hook_t *hook);
+void Engine_InitHooks(Engine_t *engine);
 
-void Engine_RunHook(Engine_t *engine, Hook_t *hook);
+Hook_t *Hook_new();
+void Hook_free(Hook_t *hook);
 
-typedef enum {
-    HOOK_BEFORE_GAME_UPDATE,
-    HOOK_AFTER_GAME_UPDATE,
-    HOOK_BEFORE_GAME_DRAW,
-    HOOK_AFTER_GAME_DRAW,
-    HOOK_COUNT
-} HOOKS;
-
-static const char *const hooks_str[] = { [HOOK_BEFORE_GAME_UPDATE] =
-                                             "beforeGameUpdate",
-                                         [HOOK_AFTER_GAME_UPDATE] =
-                                             "afterGameUpdate" ,
-                                         [HOOK_BEFORE_GAME_DRAW] =
-                                             "beforeGameDraw" ,
-                                         [HOOK_AFTER_GAME_DRAW] =
-                                             "afterGameDraw" };
+void Engine_RunHook(Engine_t *engine, const char *hook_name);
 
 void Engine_InitLua(Engine_t *engine);
 void Engine_LoadMods(Engine_t *engine);

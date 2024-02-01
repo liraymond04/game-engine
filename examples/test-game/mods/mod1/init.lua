@@ -12,11 +12,11 @@ local player_speed = 4.0
 
 local RED = { r = 255, g = 41, b = 55, a = 255 }
 
-RegisterFunction(beforeGameUpdate, function()
+RegisterFunction(HOOK_BEFORE_GAME_UPDATE, function()
   -- print("(Mod 1): Before game update!")
 end)
 
-RegisterFunction(afterGameUpdate, function()
+RegisterFunction(HOOK_AFTER_GAME_UPDATE, function()
   -- print("(Mod 1): After game update!")
   if IsKeyDown("KEY_W") then
     player_y = player_y - player_speed
@@ -32,7 +32,7 @@ RegisterFunction(afterGameUpdate, function()
   end
 end)
 
-RegisterFunction(afterGameDraw, function()
+RegisterFunction(HOOK_AFTER_GAME_DRAW, function()
   -- print("(Mod 1): After game update!")
   DrawRectangle(player_x, player_y, 20, 20, RED)
 end)

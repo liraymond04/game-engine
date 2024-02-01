@@ -32,9 +32,8 @@ void Engine_Init(Engine_t *engine, int canvasWidth, int canvasHeight, int scale,
 
     engine->current_scene = NULL;
 
-    for (int i = 0; i < HOOK_COUNT; i++) {
-        Engine_InitHook(&engine->hooks[i]);
-    }
+    Engine_InitHooks(engine);
+
     engine->key_enums = zcreate_hash_table();
 
     Engine_InitLua(engine);

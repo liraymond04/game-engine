@@ -5,12 +5,39 @@
 #define DMON_IMPL
 #include "dmon.h"
 
-void Engine_InitHook(Hook_t *hook) {
-    hook->functions = zcreate_sorted_hash_table();
-    hook->num_functions = 0;
+void Engine_InitHooks(Engine_t *engine) {
+    engine->hooks = zcreate_sorted_hash_table();
+
+#define ADD_HOOK(hook_name)                                                    \
+    zsorted_hash_set(engine->hooks, hook_name, (void *)Hook_new())
+
+    ADD_HOOK("HOOK_BEFORE_GAME_UPDATE");
+    ADD_HOOK("HOOK_AFTER_GAME_UPDATE");
+    ADD_HOOK("HOOK_BEFORE_GAME_DRAW");
+    ADD_HOOK("HOOK_AFTER_GAME_DRAW");
 }
 
-void Engine_RunHook(Engine_t *engine, Hook_t *hook) {
+Hook_t *Hook_new() {
+    Hook_t *hook = (Hook_t *)malloc(sizeof(Hook_t));
+    hook->functions = zcreate_sorted_hash_table();
+    hook->num_functions = 0;
+    return hook;
+}
+
+void Hook_free(Hook_t *hook) {
+    zfree_sorted_hash_table(hook->functions);
+    free(hook);
+    hook = NULL;
+}
+
+void Engine_RunHook(Engine_t *engine, const char *hook_name) {
+    if (!zsorted_hash_exists(engine->hooks, (char *)hook_name)) {
+        fprintf(stderr, "No hook with this name found: %s\n", hook_name);
+        return;
+    }
+
+    Hook_t *hook = zsorted_hash_get(engine->hooks, (char *)hook_name);
+
     struct ZIterator *iterator;
     for (iterator = zcreate_iterator(hook->functions);
          ziterator_exists(iterator); ziterator_next(iterator)) {
@@ -64,9 +91,12 @@ void Engine_InitLua(Engine_t *engine) {
     luaL_openlibs(engine->L);
 
     // Pass hooks to Lua env
-    for (int i = 0; i < HOOK_COUNT; i++) {
-        lua_pushlightuserdata(engine->L, &engine->hooks[i]);
-        lua_setglobal(engine->L, hooks_str[i]);
+    struct ZIterator *hook_iterator;
+    for (hook_iterator = zcreate_iterator(engine->hooks);
+         ziterator_exists(hook_iterator); ziterator_next(hook_iterator)) {
+        lua_pushlightuserdata(engine->L,
+                              (Hook_t *)ziterator_get_val(hook_iterator));
+        lua_setglobal(engine->L, ziterator_get_key(hook_iterator));
     }
 
     // C function bindings
@@ -103,8 +133,11 @@ static void watch_callback(dmon_watch_id watch_id, dmon_action action,
     char init_path[256];
     snprintf(init_path, sizeof(init_path), "%sinit.lua", rootdir);
 
-    for (int i = 0; i < HOOK_COUNT; i++) {
-        struct ZSortedHashTable *table = cur_engine->hooks[i].functions;
+    struct ZIterator *hook_iterator;
+    for (hook_iterator = zcreate_iterator(cur_engine->hooks);
+         ziterator_exists(hook_iterator); ziterator_next(hook_iterator)) {
+        Hook_t *hook = (Hook_t *)ziterator_get_val(hook_iterator);
+        struct ZSortedHashTable *table = hook->functions;
         if (zsorted_hash_exists(table, init_path)) {
             int lua_function_ref =
                 (int)(size_t)zsorted_hash_get(table, init_path);
@@ -199,16 +232,22 @@ void Engine_LoadMods(Engine_t *engine) {
 
 void Engine_CloseLua(Engine_t *engine) {
     // Free saved lua function references
-    for (int i = 0; i < HOOK_COUNT; i++) {
+    struct ZIterator *hook_iterator;
+    for (hook_iterator = zcreate_iterator(cur_engine->hooks);
+         ziterator_exists(hook_iterator); ziterator_next(hook_iterator)) {
+        Hook_t *hook = (Hook_t *)ziterator_get_val(hook_iterator);
+        struct ZSortedHashTable *table = (hook)->functions;
+
         struct ZIterator *iterator;
-        for (iterator = zcreate_iterator(engine->hooks[i].functions);
-             ziterator_exists(iterator); ziterator_next(iterator)) {
+        for (iterator = zcreate_iterator(table); ziterator_exists(iterator);
+             ziterator_next(iterator)) {
             int lua_function_ref = (int)(size_t)ziterator_get_val(iterator);
             luaL_unref(engine->L, LUA_REGISTRYINDEX, lua_function_ref);
         }
-        engine->hooks[i].num_functions = 0;
-        zfree_sorted_hash_table(engine->hooks[i].functions);
+
+        Hook_free(hook);
     }
+    zfree_sorted_hash_table(cur_engine->hooks);
 
     dmon_deinit();
 
