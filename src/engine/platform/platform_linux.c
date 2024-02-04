@@ -1,6 +1,6 @@
 #include "platform.h"
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__EMSCRIPTEN__)
 
 #include <dlfcn.h>
 

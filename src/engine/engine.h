@@ -3,9 +3,9 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
-#include <luajit-2.1/lua.h>
+#include <lua.h>
 
-#if defined(PLATFORM_WEB)
+#ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 #endif
 

@@ -1,3 +1,5 @@
+#ifndef __EMSCRIPTEN__
+
 #ifndef __DMON_H__
 #define __DMON_H__
 
@@ -1746,3 +1748,5 @@ DMON_API_IMPL void dmon_unwatch(dmon_watch_id id)
 
 #endif    // DMON_IMPL
 #endif  // __DMON_H__
+
+#endif

@@ -46,30 +46,39 @@ void Engine_Init(Engine_t *engine, int canvasWidth, int canvasHeight, int scale,
 }
 
 void Engine_Run(Engine_t *engine) {
-#if defined(PLATFORM_WEB)
-    emscripten_set_main_loop(UpdateDrawFrame, engine, 0, 1);
+#ifdef __EMSCRIPTEN__
+    emscripten_set_main_loop_arg(UpdateDrawFrame, engine, 0, 1);
 #else
     UpdateDrawFrame(engine);
 #endif
 }
 
 void UpdateDrawFrame(void *arg) {
+    printf("hellodd\n");
     Engine_t *engine = (Engine_t *)arg;
+    printf("hellosdfdd\n");
 
     while (!WindowShouldClose()) {
+        printf("hellosdf\n");
         engine->mouse_pos = Engine_Core_GetAdjustedMousePos(engine);
 
         Engine_Core_ProcessInput(engine);
+        printf("hello1\n");
         Engine_Core_Update(engine);
+        printf("hello2\n");
 
         // Draw to render texture
         //----------------------------------------------------------------------------------
         BeginTextureMode(engine->renderTexture);
         {
             ClearBackground(BLACK);
+            printf("hello3\n");
             Engine_Core_Draw(engine);
+            printf("hello4\n");
         }
         EndTextureMode();
+
+        printf("hello5\n");
 
         // Draw render texture to screen
         //----------------------------------------------------------------------------------
