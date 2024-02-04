@@ -54,31 +54,22 @@ void Engine_Run(Engine_t *engine) {
 }
 
 void UpdateDrawFrame(void *arg) {
-    printf("hellodd\n");
     Engine_t *engine = (Engine_t *)arg;
-    printf("hellosdfdd\n");
 
     while (!WindowShouldClose()) {
-        printf("hellosdf\n");
         engine->mouse_pos = Engine_Core_GetAdjustedMousePos(engine);
 
         Engine_Core_ProcessInput(engine);
-        printf("hello1\n");
         Engine_Core_Update(engine);
-        printf("hello2\n");
 
         // Draw to render texture
         //----------------------------------------------------------------------------------
         BeginTextureMode(engine->renderTexture);
         {
             ClearBackground(BLACK);
-            printf("hello3\n");
             Engine_Core_Draw(engine);
-            printf("hello4\n");
         }
         EndTextureMode();
-
-        printf("hello5\n");
 
         // Draw render texture to screen
         //----------------------------------------------------------------------------------
