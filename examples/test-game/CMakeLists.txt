@@ -30,13 +30,13 @@ string(REPLACE ";" " " PRELOAD "${PRELOAD}")
 
 # Web Configurations
 if (EMSCRIPTEN)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY -s GL_ENABLE_GET_PROC_ADDRESS=1")
     # Since WASM is used, ALLOW_MEMORY_GROWTH has no extra overheads
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s ALLOW_MEMORY_GROWTH=1 --no-heap-copy")
     # Tell Emscripten to build an example.html file.
     set_target_properties(${PROJECT_NAME} PROPERTIES
-        COMPILE_FLAGS "-sMAIN_MODULE=1"
-        LINK_FLAGS "-sMAIN_MODULE=1 ${PRELOAD}"
+        COMPILE_FLAGS "-sMAIN_MODULE=2"
+        LINK_FLAGS "-sMAIN_MODULE=2 ${PRELOAD}"
         SUFFIX ".html"
     )
 endif()
