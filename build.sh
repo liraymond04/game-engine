@@ -22,6 +22,6 @@ then
   emmake make
   cd ..
 else
-  cmake $debug_flag -B build
+  cmake $debug_flag -G Ninja -B build
   cmake --build build
 fi

@@ -6,9 +6,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <dirent.h>
-#include <luajit-2.1/lua.h>
-#include <luajit-2.1/lualib.h>
-#include <luajit-2.1/lauxlib.h>
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
 #include <json-c/json.h>
 #include "zhash-c/zsorted_hash.h"
 
