@@ -10,6 +10,7 @@
 #endif
 
 #include "raylib.h"
+#include "raylib-nuklear.h"
 
 #include "core.h"
 #include "hooks.h"
@@ -37,6 +38,8 @@ typedef struct Engine {
     float aspect_ratio;
     int screenWidth;
     int screenHeight;
+
+    struct nk_context *nk_ctx;
 
     RenderTexture2D renderTexture;
 } Engine_t;

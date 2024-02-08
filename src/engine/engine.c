@@ -3,6 +3,9 @@
 #include "hooks.h"
 #include "scene.h"
 
+#define RAYLIB_NUKLEAR_IMPLEMENTATION
+#include "raylib-nuklear.h"
+
 bool show_fps = true;
 
 void UpdateDrawFrame(void *arg);
@@ -29,6 +32,9 @@ void Engine_Init(Engine_t *engine, int canvasWidth, int canvasHeight, int scale,
     engine->renderTexture =
         LoadRenderTexture(engine->canvasWidth, engine->canvasHeight);
     //--------------------------------------------------------------------------------------
+
+    int fontSize = 10;
+    engine->nk_ctx = InitNuklear(fontSize);
 
     engine->current_scene = NULL;
 
@@ -58,6 +64,7 @@ void UpdateDrawFrame(void *arg) {
 
     while (!WindowShouldClose()) {
         engine->mouse_pos = Engine_Core_GetAdjustedMousePos(engine);
+        UpdateNuklear_MouseAdjusted(engine->nk_ctx, engine->mouse_pos);
 
         Engine_Core_ProcessInput(engine);
         Engine_Core_Update(engine);
@@ -68,6 +75,7 @@ void UpdateDrawFrame(void *arg) {
         {
             ClearBackground(BLACK);
             Engine_Core_Draw(engine);
+            DrawNuklear(engine->nk_ctx);
         }
         EndTextureMode();
 
@@ -127,6 +135,8 @@ void Engine_Cleanup(Engine_t *engine) {
 
     zfree_hash_table(engine->loaded_mods);
     zfree_hash_table(engine->key_enums);
+
+    UnloadNuklear(engine->nk_ctx);
 
     CloseWindow();
 }
