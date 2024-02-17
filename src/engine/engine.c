@@ -47,6 +47,8 @@ void Engine_Init(Engine_t *engine, int canvasWidth, int canvasHeight, int scale,
     engine->loaded_mods = zcreate_hash_table();
     Engine_LoadMods(engine);
 
+    Engine_RunHook(engine, "HOOK_ENGINE_INIT");
+
     Engine_Scene_Load(engine, init_scene_path);
     engine->current_scene->interface.Init(engine);
 }
@@ -130,6 +132,8 @@ void Engine_Cleanup(Engine_t *engine) {
         free(current_scene);
         engine->current_scene = NULL;
     }
+
+    Engine_RunHook(engine, "HOOK_ENGINE_CLEANUP");
 
     Engine_CloseLua(engine);
 

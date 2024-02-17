@@ -2,19 +2,21 @@
 #include "core.h"
 
 void Engine_Core_ProcessInput(Engine_t *engine) {
+    Engine_RunHook(engine, "HOOK_BEFORE_ENGINE_PROCESS_INPUT");
     engine->current_scene->interface.ProcessInput(engine);
+    Engine_RunHook(engine, "HOOK_AFTER_ENGINE_PROCESS_INPUT");
 }
 
 void Engine_Core_Update(Engine_t *engine) {
-    Engine_RunHook(engine, "HOOK_BEFORE_GAME_UPDATE");
+    Engine_RunHook(engine, "HOOK_BEFORE_ENGINE_UPDATE");
     engine->current_scene->interface.Update(engine);
-    Engine_RunHook(engine, "HOOK_AFTER_GAME_UPDATE");
+    Engine_RunHook(engine, "HOOK_AFTER_ENGINE_UPDATE");
 }
 
 void Engine_Core_Draw(Engine_t *engine) {
-    Engine_RunHook(engine, "HOOK_BEFORE_GAME_DRAW");
+    Engine_RunHook(engine, "HOOK_BEFORE_ENGINE_DRAW");
     engine->current_scene->interface.Draw(engine);
-    Engine_RunHook(engine, "HOOK_AFTER_GAME_DRAW");
+    Engine_RunHook(engine, "HOOK_AFTER_ENGINE_DRAW");
 }
 
 float map(float x, float in_min, float in_max, float out_min, float out_max) {
