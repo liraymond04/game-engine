@@ -21,6 +21,18 @@ then
   emcmake cmake .. -DPLATFORM=Web $debug_flag -DCMAKE_EXE_LINKER_FLAGS="-s USE_GLFW=3" -DCMAKE_EXECUTABLE_SUFFIX=".html"
   emmake make
   cd ..
+elif [[ $target_flag == "windows" ]]
+then
+  export PATH=~/my_msvc/opt/msvc/bin/x64:$PATH
+  [ ! -d "build/" ] && mkdir build
+  cd build
+  CC=cl CXX=cl cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_SYSTEM_NAME=Windows \
+        -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=1 \
+        ..
+  make
+  cd ..
 else
   cmake $debug_flag -G Ninja -B build
   cmake --build build

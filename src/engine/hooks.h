@@ -5,7 +5,21 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
+
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+#if defined(_WIN32)           
+	#define NOGDI             // All GDI defines and routines
+	#define NOUSER            // All USER defines and routines
+#endif
+#include "windows-dirent.h"
+#if defined(_WIN32)           // raylib uses these names as function parameters
+	#undef near
+	#undef far
+#endif
+#else
 #include <dirent.h>
+#endif
+
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>

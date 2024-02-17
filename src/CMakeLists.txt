@@ -31,7 +31,7 @@ endif()
 
 set(JSON_C_VERSION "0.17-20230812")
 find_package(json-c QUIET)
-if (NOT json-c_FOUND)
+if (NOT json-c_FOUND OR WIN32)
     fetch_and_build_project(json-c https://github.com/json-c/json-c/archive/refs/tags/json-c-${JSON_C_VERSION}.tar.gz)
 endif()
 
@@ -47,7 +47,7 @@ file(GLOB SRC_FILES "${SRC_DIR}/engine/*.c" "${SRC_DIR}/engine/*/*.c")
 
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
-target_link_libraries(${PROJECT_NAME} raylib pthread -lm lua_static json-c -ldl)
+target_link_libraries(${PROJECT_NAME} raylib -lm lua_static json-c)
 
 # Checks if OSX and links appropriate frameworks (Only required on MacOS)
 if (APPLE)

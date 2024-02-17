@@ -4,14 +4,8 @@
 
 #include <windows.h>
 
-#undef EXPORT
-#define EXPORT __declspec(dllexport)
-
-#undef DLL_EXTENSION
-#define DLL_EXTENSION "dll"
-
 void *platform_load_library(const char *path) {
-    return LoadLibrary(full_scene_path);
+    return LoadLibrary(path);
 }
 
 void *platform_library_func(void *handle, const char *func) {
