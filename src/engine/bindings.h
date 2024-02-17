@@ -11,5 +11,6 @@ void Engine_BindCFunctions(Engine_t *engine);
 
 int _IsKeyDown(lua_State *L);
 int _DrawRectangle(lua_State *L);
+int _Engine_Scene_Switch(lua_State *L);
 
 #endif // !ENGINE_BINDINGS

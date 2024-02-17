@@ -14,9 +14,6 @@ EXPORT void Init(Engine_t *engine) {
 
 EXPORT void ProcessInput(Engine_t *engine) {
     Engine_RunHook(engine, "HOOK_BEFORE_MAIN_MENU_PROCESS_INPUT");
-    if (IsKeyDown(KEY_ENTER)) {
-        Engine_Scene_Switch(engine, "scenes/bin/libsettings_menu");
-    }
     Engine_RunHook(engine, "HOOK_AFTER_MAIN_MENU_PROCESS_INPUT");
 }
 

@@ -16,11 +16,14 @@ void Engine_BindCFunctions(Engine_t *engine) {
         strcat(key_string, tmp);
         zhash_set(engine->key_enums, (char *)key_string, (void *)(size_t)(i));
     }
+    zhash_set(engine->key_enums, "KEY_ENTER", (void *)(size_t)KEY_ENTER);
 
     lua_pushcfunction(engine->L, _IsKeyDown);
     lua_setglobal(engine->L, "IsKeyDown");
     lua_pushcfunction(engine->L, _DrawRectangle);
     lua_setglobal(engine->L, "DrawRectangle");
+    lua_pushcfunction(engine->L, _Engine_Scene_Switch);
+    lua_setglobal(engine->L, "Engine_Scene_Switch");
 }
 
 int _IsKeyDown(lua_State *L) {
@@ -49,6 +52,14 @@ int _DrawRectangle(lua_State *L) {
                     luaL_checkinteger(L, -2), luaL_checkinteger(L, -1) };
 
     DrawRectangle(posX, posY, width, height, color);
+
+    return 0;
+}
+
+int _Engine_Scene_Switch(lua_State *L) {
+    const char *path = luaL_checkstring(L, 1);
+
+    Engine_Scene_Switch(engine_context, path);
 
     return 0;
 }
