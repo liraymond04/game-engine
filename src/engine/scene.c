@@ -49,3 +49,16 @@ void Engine_Scene_Switch(Engine_t *engine, const char *new_scene_path) {
 
     scene->interface.Init(engine);
 }
+
+void Engine_Mod_Scene_Load(Engine_t *engine, const char *scene_path,
+                           const char *scene_name) {
+    Engine_Scene_Load(engine, scene_path);
+    strcpy(engine->current_scene->scene_name, scene_name);
+}
+
+void Engine_Mod_Scene_Switch(Engine_t *engine, const char *scene_name) {
+    Scene_t *scene = engine->current_scene;
+    scene->interface.Cleanup(engine);
+    strcpy(scene->scene_name, scene_name);
+    scene->interface.Init(engine);
+}

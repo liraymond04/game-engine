@@ -11,6 +11,7 @@ add_subdirectory(src)
 
 # example projects
 add_subdirectory(examples/test-game)
+add_subdirectory(examples/holojam)
 
 # add engine headers to global include
 target_include_directories(engine INTERFACE ${CMAKE_SOURCE_DIR}/src/engine)

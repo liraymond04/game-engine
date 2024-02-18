@@ -11,7 +11,7 @@ bool show_fps = true;
 void UpdateDrawFrame(void *arg);
 
 void Engine_Init(Engine_t *engine, int canvasWidth, int canvasHeight, int scale,
-                 const char *window_name, const char *init_scene_path) {
+                 const char *window_name) {
     engine->canvasWidth = canvasWidth;
     engine->canvasHeight = canvasHeight;
     engine->scale = scale;
@@ -48,9 +48,6 @@ void Engine_Init(Engine_t *engine, int canvasWidth, int canvasHeight, int scale,
     Engine_LoadMods(engine);
 
     Engine_RunHook(engine, "HOOK_ENGINE_INIT");
-
-    Engine_Scene_Load(engine, init_scene_path);
-    engine->current_scene->interface.Init(engine);
 }
 
 void Engine_Run(Engine_t *engine) {

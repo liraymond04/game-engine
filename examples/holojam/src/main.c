@@ -4,9 +4,9 @@
 int main() {
     Engine_t engine;
 
-    Engine_Init(&engine, 700, 394, 2, "Holo RTS");
+    Engine_Init(&engine, 700, 394, 2, "Holojam");
 
-    Engine_Scene_Load(&engine, "scenes/bin/libmain_menu");
+    Engine_Mod_Scene_Load(&engine, "scenes/bin/libmod_scene", "MAIN_MENU");
     engine.current_scene->interface.Init(&engine);
 
     Engine_Run(&engine);

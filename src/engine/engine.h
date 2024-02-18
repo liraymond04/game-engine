@@ -45,7 +45,7 @@ typedef struct Engine {
 } Engine_t;
 
 void Engine_Init(Engine_t *engine, int canvasWidth, int canvasHeight, int scale,
-                 const char *window_name, const char *init_scene_path);
+                 const char *window_name);
 void Engine_Run(Engine_t *engine);
 void Engine_Cleanup(Engine_t *engine);
 

@@ -17,6 +17,8 @@ void Engine_BindCFunctions(Engine_t *engine) {
     lua_setglobal(engine->L, "DrawRectangle");
     lua_pushcfunction(engine->L, _Engine_Scene_Switch);
     lua_setglobal(engine->L, "Engine_Scene_Switch");
+    lua_pushcfunction(engine->L, _Engine_Mod_Scene_Switch);
+    lua_setglobal(engine->L, "Engine_Mod_Scene_Switch");
 }
 
 int _IsKeyDown(lua_State *L) {
@@ -53,6 +55,14 @@ int _Engine_Scene_Switch(lua_State *L) {
     const char *path = luaL_checkstring(L, 1);
 
     Engine_Scene_Switch(engine_context, path);
+
+    return 0;
+}
+
+int _Engine_Mod_Scene_Switch(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+
+    Engine_Mod_Scene_Switch(engine_context, name);
 
     return 0;
 }
@@ -95,7 +105,8 @@ void map_keys() {
         char key_string[256];
         strcpy(key_string, key_prefix);
         strcat(key_string, tmp);
-        zhash_set(engine_context->key_enums, (char *)key_string, (void *)(size_t)(i));
+        zhash_set(engine_context->key_enums, (char *)key_string,
+                  (void *)(size_t)(i));
     }
 
     // keys
