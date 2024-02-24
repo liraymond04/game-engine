@@ -6,15 +6,32 @@ static Engine_t *engine_context;
 
 void map_keys();
 
+static Color luaL_checkcolor(lua_State *L, int arg);
+
 void Engine_BindCFunctions(Engine_t *engine) {
     engine_context = engine;
 
     map_keys();
+    map_enums(engine->L);
 
     lua_pushcfunction(engine->L, _IsKeyDown);
     lua_setglobal(engine->L, "IsKeyDown");
+    lua_pushcfunction(engine->L, _IsKeyUp);
+    lua_setglobal(engine->L, "IsKeyUp");
+    lua_pushcfunction(engine->L, _IsKeyPressed);
+    lua_setglobal(engine->L, "IsKeyPressed");
+    lua_pushcfunction(engine->L, _IsKeyReleased);
+    lua_setglobal(engine->L, "IsKeyReleased");
+    lua_pushcfunction(engine->L, _IsKeyPressedRepeat);
+    lua_setglobal(engine->L, "IsKeyPressedRepeat");
+    lua_pushcfunction(engine->L, _DrawText);
+    lua_setglobal(engine->L, "DrawText");
+    lua_pushcfunction(engine->L, _DrawLine);
+    lua_setglobal(engine->L, "DrawLine");
     lua_pushcfunction(engine->L, _DrawRectangle);
     lua_setglobal(engine->L, "DrawRectangle");
+    lua_pushcfunction(engine->L, _DrawCircle);
+    lua_setglobal(engine->L, "DrawCircle");
     lua_pushcfunction(engine->L, _Engine_Scene_Switch);
     lua_setglobal(engine->L, "Engine_Scene_Switch");
     lua_pushcfunction(engine->L, _Engine_Mod_Scene_Switch);
@@ -31,22 +48,89 @@ int _IsKeyDown(lua_State *L) {
     return 1;
 }
 
+int _IsKeyUp(lua_State *L) {
+    const char *key = luaL_checkstring(L, 1);
+
+    int ret =
+        IsKeyUp((int)(size_t)zhash_get(engine_context->key_enums, (char *)key));
+    lua_pushboolean(L, ret);
+
+    return 1;
+}
+
+int _IsKeyPressed(lua_State *L) {
+    const char *key = luaL_checkstring(L, 1);
+
+    int ret = IsKeyPressed(
+        (int)(size_t)zhash_get(engine_context->key_enums, (char *)key));
+    lua_pushboolean(L, ret);
+
+    return 1;
+}
+
+int _IsKeyReleased(lua_State *L) {
+    const char *key = luaL_checkstring(L, 1);
+
+    int ret = IsKeyReleased(
+        (int)(size_t)zhash_get(engine_context->key_enums, (char *)key));
+    lua_pushboolean(L, ret);
+
+    return 1;
+}
+
+int _IsKeyPressedRepeat(lua_State *L) {
+    const char *key = luaL_checkstring(L, 1);
+
+    int ret = IsKeyPressedRepeat(
+        (int)(size_t)zhash_get(engine_context->key_enums, (char *)key));
+    lua_pushboolean(L, ret);
+
+    return 1;
+}
+
+int _DrawText(lua_State *L) {
+    const char *text = luaL_checkstring(L, 1);
+    int posX = luaL_checkinteger(L, 2);
+    int posY = luaL_checkinteger(L, 3);
+    int fontSize = luaL_checkinteger(L, 4);
+    Color color = luaL_checkcolor(L, 5);
+
+    DrawText(text, posX, posY, fontSize, color);
+
+    return 0;
+}
+
+int _DrawLine(lua_State *L) {
+    int startPosX = luaL_checkinteger(L, 1);
+    int startPosY = luaL_checkinteger(L, 2);
+    int endPosX = luaL_checkinteger(L, 3);
+    int endPosY = luaL_checkinteger(L, 4);
+    Color color = luaL_checkcolor(L, 5);
+
+    DrawLine(startPosX, startPosY, endPosX, endPosY, color);
+
+    return 0;
+}
+
 int _DrawRectangle(lua_State *L) {
     int posX = luaL_checkinteger(L, 1);
     int posY = luaL_checkinteger(L, 2);
     int width = luaL_checkinteger(L, 3);
     int height = luaL_checkinteger(L, 4);
-
-    luaL_checktype(L, 5, LUA_TTABLE);
-    lua_getfield(L, 5, "r");
-    lua_getfield(L, 5, "g");
-    lua_getfield(L, 5, "b");
-    lua_getfield(L, 5, "a");
-
-    Color color = { luaL_checkinteger(L, -4), luaL_checkinteger(L, -3),
-                    luaL_checkinteger(L, -2), luaL_checkinteger(L, -1) };
+    Color color = luaL_checkcolor(L, 5);
 
     DrawRectangle(posX, posY, width, height, color);
+
+    return 0;
+}
+
+int _DrawCircle(lua_State *L) {
+    int centerX = luaL_checkinteger(L, 1);
+    int centerY = luaL_checkinteger(L, 2);
+    int radius = luaL_checkinteger(L, 3);
+    Color color = luaL_checkcolor(L, 4);
+
+    DrawCircle(centerX, centerY, radius, color);
 
     return 0;
 }
@@ -65,6 +149,19 @@ int _Engine_Mod_Scene_Switch(lua_State *L) {
     Engine_Mod_Scene_Switch(engine_context, name);
 
     return 0;
+}
+
+static Color luaL_checkcolor(lua_State *L, int arg) {
+    luaL_checktype(L, arg, LUA_TTABLE);
+    lua_getfield(L, arg, "r");
+    lua_getfield(L, arg, "g");
+    lua_getfield(L, arg, "b");
+    lua_getfield(L, arg, "a");
+
+    Color color = { luaL_checkinteger(L, -4), luaL_checkinteger(L, -3),
+                    luaL_checkinteger(L, -2), luaL_checkinteger(L, -1) };
+
+    return color;
 }
 
 void map_keys() {
