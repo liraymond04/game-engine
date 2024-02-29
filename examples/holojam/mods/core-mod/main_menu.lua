@@ -7,11 +7,25 @@ RegisterFunction("HOOK_MAIN_MENU_INIT", function()
 
   player_x = 20
   player_y = 20
+
+  event_register("TEST", "main_menu_listener", function ()
+    print("main_menu TEST event fired")
+    return false
+  end)
+
+  event_register("TEST", "main_menu_listener the second", function (type, sender, event_context, context)
+    print("main_menu " .. type .. " event fired by " .. sender)
+    return false
+  end)
 end)
 
 RegisterFunction("HOOK_MAIN_MENU_PROCESS_INPUT", function()
   if IsKeyDown("KEY_ENTER") then
     Engine_Mod_Scene_Switch("SETTINGS_MENU")
+  end
+
+  if IsKeyDown("KEY_F") then
+    event_fire("TEST", "main_menu_sender")
   end
 end)
 

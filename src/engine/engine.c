@@ -1,7 +1,4 @@
 #include "engine.h"
-#include "core.h"
-#include "hooks.h"
-#include "scene.h"
 
 #define RAYLIB_NUKLEAR_IMPLEMENTATION
 #include "raylib-nuklear.h"
@@ -32,6 +29,8 @@ void Engine_Init(Engine_t *engine, int canvasWidth, int canvasHeight, int scale,
     engine->renderTexture =
         LoadRenderTexture(engine->canvasWidth, engine->canvasHeight);
     //--------------------------------------------------------------------------------------
+
+    event_system_init(engine);
 
     int fontSize = 10;
     engine->nk_ctx = InitNuklear(fontSize);
@@ -138,6 +137,8 @@ void Engine_Cleanup(Engine_t *engine) {
     zfree_hash_table(engine->key_enums);
 
     UnloadNuklear(engine->nk_ctx);
+
+    event_system_free();
 
     CloseWindow();
 }

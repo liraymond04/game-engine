@@ -50,6 +50,9 @@ void Engine_BindCFunctions(Engine_t *engine) {
     /* Engine */
     LUA_REGISTER_FUNCTION(engine->L, Engine_Scene_Switch);
     LUA_REGISTER_FUNCTION(engine->L, Engine_Mod_Scene_Switch);
+    LUA_REGISTER_FUNCTION(engine->L, event_register);
+    LUA_REGISTER_FUNCTION(engine->L, event_unregister);
+    LUA_REGISTER_FUNCTION(engine->L, event_fire);
 }
 
 int _IsKeyDown(lua_State *L) {
@@ -240,8 +243,8 @@ int _nk_combo_begin_color(lua_State *L) {
     Color raylib_color = luaL_checkcolor(L, 1);
     struct nk_vec2 size = luaL_checkvec2(L, 2);
 
-    int ret = nk_combo_begin_color(engine_context->nk_ctx, ColorToNuklear(raylib_color),
-                         size);
+    int ret = nk_combo_begin_color(engine_context->nk_ctx,
+                                   ColorToNuklear(raylib_color), size);
     lua_pushboolean(L, ret);
 
     return 1;
@@ -257,7 +260,8 @@ int _nk_color_picker(lua_State *L) {
     Color raylib_color = luaL_checkcolor(L, 1);
     int colorformat = luaL_checkinteger(L, 2);
 
-    struct nk_colorf color = nk_color_picker(engine_context->nk_ctx, ColorToNuklearF(raylib_color), colorformat);
+    struct nk_colorf color = nk_color_picker(
+        engine_context->nk_ctx, ColorToNuklearF(raylib_color), colorformat);
 
     lua_newtable(L);
 
@@ -285,8 +289,9 @@ int _nk_propertyf(lua_State *L) {
     float max = luaL_checknumber(L, 4);
     float step = luaL_checknumber(L, 5);
     float inc_per_pixel = luaL_checknumber(L, 6);
-    
-    float ret = nk_propertyf(engine_context->nk_ctx, name, min, val, max, step, inc_per_pixel);
+
+    float ret = nk_propertyf(engine_context->nk_ctx, name, min, val, max, step,
+                             inc_per_pixel);
     lua_pushnumber(L, ret);
 
     return 1;
@@ -304,6 +309,43 @@ int _Engine_Mod_Scene_Switch(lua_State *L) {
     const char *name = luaL_checkstring(L, 1);
 
     Engine_Mod_Scene_Switch(engine_context, name);
+
+    return 0;
+}
+
+int _event_register(lua_State *L) {
+    const char *type = luaL_checkstring(L, 1);
+    const char *listener = luaL_checkstring(L, 2);
+
+    luaL_checktype(L, 3, LUA_TFUNCTION);
+    int gLuaFunctionRef = luaL_ref(L, LUA_REGISTRYINDEX);
+
+    event_register(type, (void *)listener, NULL, gLuaFunctionRef);
+
+    return 0;
+}
+
+int _event_unregister(lua_State *L) {
+    const char *type = luaL_checkstring(L, 1);
+    const char *listener = luaL_checkstring(L, 2);
+
+    luaL_checktype(L, 3, LUA_TFUNCTION);
+    int gLuaFunctionRef = luaL_ref(L, LUA_REGISTRYINDEX);
+
+    event_unregister(type, (void *)listener, NULL, gLuaFunctionRef);
+
+    return 0;
+}
+
+int _event_fire(lua_State *L) {
+    const char *type = luaL_checkstring(L, 1);
+    const char *sender = luaL_checkstring(L, 2);
+
+    // TODO
+    // add arguments for the event_context
+    // struct and the void pointer context
+    event_context_t event_context;
+    event_fire(type, (void *)sender, event_context, NULL);
 
     return 0;
 }
