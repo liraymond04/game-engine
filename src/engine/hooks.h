@@ -24,7 +24,7 @@
 #include <lualib.h>
 #include <lauxlib.h>
 #include <json-c/json.h>
-#include "zhash-c/zsorted_hash.h"
+#include "containers/zhash-c/zsorted_hash.h"
 
 typedef struct Engine Engine_t;
 

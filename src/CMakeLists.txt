@@ -43,7 +43,7 @@ endif()
 
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-file(GLOB SRC_FILES "${SRC_DIR}/engine/*.c" "${SRC_DIR}/engine/*/*.c")
+file(GLOB_RECURSE SRC_FILES "${SRC_DIR}/engine/*.c")
 
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 

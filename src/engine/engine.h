@@ -18,8 +18,8 @@
 
 #include "platform/platform.h"
 
-#include "zhash-c/zhash.h"
-#include "zhash-c/zsorted_hash.h"
+#include "containers/zhash-c/zhash.h"
+#include "containers/zhash-c/zsorted_hash.h"
 
 typedef struct Engine {
     struct ZSortedHashTable *hooks;
