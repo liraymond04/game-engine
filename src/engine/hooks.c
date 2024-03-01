@@ -113,6 +113,9 @@ void Engine_InitLua(Engine_t *engine) {
     engine->L = luaL_newstate();
     luaL_openlibs(engine->L);
 
+    // Run metatable definitions
+    luaL_dofile(engine->L, "./bin/game-engine.lua");
+
     // C function bindings
     lua_pushcfunction(engine->L, RegisterFunction);
     lua_setglobal(engine->L, "RegisterFunction");

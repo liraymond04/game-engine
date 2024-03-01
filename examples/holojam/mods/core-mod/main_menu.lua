@@ -1,6 +1,6 @@
 local player_speed = 4.0
 
-local bg = { r = 255, g = 41, b = 55, a = 255 }
+local bg = Color.new(255, 41, 55, 255)
 
 RegisterFunction("HOOK_MAIN_MENU_INIT", function()
   print("(Core Mod): Main menu init!")
@@ -8,12 +8,12 @@ RegisterFunction("HOOK_MAIN_MENU_INIT", function()
   player_x = 20
   player_y = 20
 
-  event_register("TEST", "main_menu_listener", function ()
+  event_register("TEST", "main_menu_listener", function()
     print("main_menu TEST event fired")
     return false
   end)
 
-  event_register("TEST", "main_menu_listener the second", function (type, sender, event_context, context)
+  event_register("TEST", "main_menu_listener the second", function(type, sender, event_context, context)
     print("main_menu " .. type .. " event fired by " .. sender)
     return false
   end)
@@ -26,6 +26,10 @@ RegisterFunction("HOOK_MAIN_MENU_PROCESS_INPUT", function()
 
   if IsKeyDown("KEY_F") then
     event_fire("TEST", "main_menu_sender")
+  end
+
+  if IsKeyDown("KEY_G") then
+    print(bg)
   end
 end)
 

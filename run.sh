@@ -39,6 +39,9 @@ if [ ! -d "$running_directory" ]; then
     exit 1
 fi
 
+# Create a symbolic link to lua/game-engine.lua in the running directory
+ln -s "$root_directory/lua/game-engine.lua" "$running_directory/bin/game-engine.lua"
+
 cd $running_directory
 
 # Run the executable

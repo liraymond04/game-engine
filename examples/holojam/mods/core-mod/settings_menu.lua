@@ -9,8 +9,11 @@ RegisterFunction("HOOK_SETTINGS_MENU_INIT", function()
   player_y = 20
 end)
 
-RegisterFunction("HOOK_MAIN_MENU_PROCESS_INPUT", function()
+RegisterFunction("HOOK_SETTINGS_MENU_PROCESS_INPUT", function()
   -- print("(Core Mod): Settings menu process input!")
+  if IsKeyDown("KEY_F") then
+    event_fire("TEST", "settings_menu_sender")
+  end
 end)
 
 RegisterFunction("HOOK_SETTINGS_MENU_UPDATE", function()

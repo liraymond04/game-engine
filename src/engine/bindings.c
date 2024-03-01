@@ -263,21 +263,15 @@ int _nk_color_picker(lua_State *L) {
     struct nk_colorf color = nk_color_picker(
         engine_context->nk_ctx, ColorToNuklearF(raylib_color), colorformat);
 
-    lua_newtable(L);
-
     raylib_color = ColorFromNuklearF(color);
 
-    lua_pushinteger(L, raylib_color.r);
-    lua_setfield(L, -2, "r");
+    // Create a Lua script string to create a Color object
+    const char *script = "return Color.new(%d, %d, %d, %d)";
+    char buffer[100];
+    snprintf(buffer, sizeof(buffer), script, raylib_color.r, raylib_color.g,
+             raylib_color.b, raylib_color.a);
 
-    lua_pushinteger(L, raylib_color.g);
-    lua_setfield(L, -2, "g");
-
-    lua_pushinteger(L, raylib_color.b);
-    lua_setfield(L, -2, "b");
-
-    lua_pushinteger(L, raylib_color.a);
-    lua_setfield(L, -2, "a");
+    luaL_dostring(L, buffer);
 
     return 1;
 }
