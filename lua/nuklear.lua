@@ -1,0 +1,19 @@
+---@meta nuklear
+
+-- TODO
+--
+-- /* Nuklear */
+-- int _nk_begin(lua_State *L);
+-- int _nk_end(lua_State *L);
+-- int _nk_layout_row_static(lua_State *L);
+-- int _nk_layout_row_dynamic(lua_State *L);
+-- int _nk_button_label(lua_State *L);
+-- int _nk_option_label(lua_State *L);
+-- int _nk_property_int(lua_State *L);
+-- int _nk_label(lua_State *L);
+-- int _nk_widget_width(lua_State *L);
+-- int _nk_combo_begin_color(lua_State *L);
+-- int _nk_combo_end(lua_State *L);
+-- int _nk_color_picker(lua_State *L);
+-- int _nk_propertyf(lua_State *L);
+--

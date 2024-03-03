@@ -114,7 +114,7 @@ void Engine_InitLua(Engine_t *engine) {
     luaL_openlibs(engine->L);
 
     // Run metatable definitions
-    luaL_dofile(engine->L, "./bin/game-engine.lua");
+    luaL_dofile(engine->L, "./bin/include.lua");
 
     // C function bindings
     lua_pushcfunction(engine->L, RegisterFunction);
