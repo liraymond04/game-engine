@@ -314,9 +314,10 @@ int _event_register(lua_State *L) {
     luaL_checktype(L, 3, LUA_TFUNCTION);
     int gLuaFunctionRef = luaL_ref(L, LUA_REGISTRYINDEX);
 
-    event_register(type, (void *)listener, NULL, gLuaFunctionRef);
+    int ret = event_register(type, (void *)listener, NULL, gLuaFunctionRef);
+    lua_pushboolean(L, ret);
 
-    return 0;
+    return 1;
 }
 
 int _event_unregister(lua_State *L) {
@@ -326,9 +327,10 @@ int _event_unregister(lua_State *L) {
     luaL_checktype(L, 3, LUA_TFUNCTION);
     int gLuaFunctionRef = luaL_ref(L, LUA_REGISTRYINDEX);
 
-    event_unregister(type, (void *)listener, NULL, gLuaFunctionRef);
+    int ret = event_unregister(type, (void *)listener, NULL, gLuaFunctionRef);
+    lua_pushboolean(L, ret);
 
-    return 0;
+    return 1;
 }
 
 int _event_fire(lua_State *L) {
@@ -339,9 +341,10 @@ int _event_fire(lua_State *L) {
     // add arguments for the event_context
     // struct and the void pointer context
     event_context_t event_context;
-    event_fire(type, (void *)sender, event_context, NULL);
+    int ret = event_fire(type, (void *)sender, event_context, NULL);
+    lua_pushboolean(L, ret);
 
-    return 0;
+    return 1;
 }
 
 static Color luaL_checkcolor(lua_State *L, int arg) {
