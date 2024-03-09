@@ -3,22 +3,32 @@
 #define RRES_IMPLEMENTATION
 #include "rres.h"
 
+#include <json-c/json.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <stdbool.h>
 #include <sys/stat.h>
 
+#include <limits.h>
+
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
+
 #define DEFAULT_OUTPUT_FILE "data.rres"
+#define DEFAULT_OUTPUT_JSON_FILE "data.rres.json"
 
 typedef struct {
     const char *extension;
-    void (*process_func)(const char *);
+    int (*process_func)(const char *);
 } FileTypeEntry;
 
-static void PackTEXT(const char *filepath);
-static void PackIMGE(const char *filepath);
-static void PackWAVE(const char *filepath);
+static int PackTEXT(const char *filepath);
+static int PackIMGE(const char *filepath);
+static int PackWAVE(const char *filepath);
 
 const FileTypeEntry file_types[] = {
     { ".png", PackIMGE }, //
@@ -26,6 +36,8 @@ const FileTypeEntry file_types[] = {
     { ".txt", PackTEXT }, //
     // Add more file types as needed
 };
+
+json_object *json_root;
 
 FILE *rres_file;
 
@@ -38,7 +50,7 @@ static unsigned char *LoadDataBuffer(rresResourceChunkData data,
                                      unsigned int raw_size);
 static void UnloadDataBuffer(unsigned char *buffer);
 
-static void PackTEXT(const char *filepath) {
+static int PackTEXT(const char *filepath) {
     char *text = LoadFileText(filepath);
     unsigned int raw_size = strlen(text);
 
@@ -51,6 +63,7 @@ static void PackTEXT(const char *filepath) {
     // Resource chunk identifier (generated from filename CRC32 hash)
     chunk_info.id =
         rresComputeCRC32((unsigned char *)filepath, strlen(filepath));
+    int id = chunk_info.id;
 
     chunk_info.compType = RRES_COMP_NONE,         // Data compression algorithm
         chunk_info.cipherType = RRES_CIPHER_NONE, // Data encription algorithm
@@ -92,9 +105,10 @@ static void PackTEXT(const char *filepath) {
     RRES_FREE(chunk_data.props);
     UnloadDataBuffer(buffer);
     UnloadFileText(text);
+    return id;
 }
 
-static void PackIMGE(const char *filepath) {
+static int PackIMGE(const char *filepath) {
     Image image = LoadImage(filepath);
     unsigned int raw_size =
         GetPixelDataSize(image.width, image.height, image.format);
@@ -108,6 +122,7 @@ static void PackIMGE(const char *filepath) {
     // Resource chunk identifier (generated from filename CRC32 hash)
     chunk_info.id =
         rresComputeCRC32((unsigned char *)filepath, strlen(filepath));
+    int id = chunk_info.id;
 
     chunk_info.compType = RRES_COMP_NONE,         // Data compression algorithm
         chunk_info.cipherType = RRES_CIPHER_NONE, // Data encription algorithm
@@ -149,9 +164,10 @@ static void PackIMGE(const char *filepath) {
     RRES_FREE(chunk_data.props);
     UnloadDataBuffer(buffer);
     UnloadImage(image);
+    return id;
 }
 
-static void PackWAVE(const char *filepath) {
+static int PackWAVE(const char *filepath) {
     Wave wave = LoadWave(filepath);
     unsigned int raw_size =
         wave.frameCount * wave.channels * (wave.sampleSize / 8);
@@ -165,6 +181,7 @@ static void PackWAVE(const char *filepath) {
     // Resource chunk identifier (generated from filename CRC32 hash)
     chunk_info.id =
         rresComputeCRC32((unsigned char *)filepath, strlen(filepath));
+    int id = chunk_info.id;
 
     chunk_info.compType = RRES_COMP_NONE,         // Data compression algorithm
         chunk_info.cipherType = RRES_CIPHER_NONE, // Data encription algorithm
@@ -204,6 +221,66 @@ static void PackWAVE(const char *filepath) {
     RRES_FREE(chunk_data.props);
     UnloadDataBuffer(buffer);
     UnloadWave(wave);
+    return id;
+}
+
+const char *get_dirname(const char *path) {
+    static char dirname[PATH_MAX]; // Assuming PATH_MAX is defined
+    strcpy(dirname, path);
+
+    char *last_slash = strrchr(dirname, '/');
+    char *last_backslash = strrchr(dirname, '\\');
+
+    char *last_separator = NULL;
+    if (last_slash != NULL && last_backslash != NULL) {
+        last_separator =
+            (last_slash > last_backslash) ? last_slash : last_backslash;
+    } else if (last_slash != NULL) {
+        last_separator = last_slash;
+    } else if (last_backslash != NULL) {
+        last_separator = last_backslash;
+    }
+
+    if (last_separator != NULL) {
+        *last_separator = '\0';
+    }
+
+    return dirname;
+}
+
+const char *get_filename(const char *path) {
+    const char *filename = strrchr(path, '/'); // For Unix-like paths
+    if (!filename) {
+        filename = strrchr(path, '\\'); // For Windows paths
+    }
+    if (!filename) {
+        filename = path; // If no directory separator found, use the whole path
+                         // as filename
+    } else {
+        filename++; // Move past the directory separator
+    }
+    return filename;
+}
+
+// Function to create objects in the JSON structure based on the path
+static json_object *create_json_objects(json_object *root, const char *path) {
+    char *path_copy = strdup(path); // Duplicate the path for tokenization
+    char *token = strtok(path_copy, "/");
+    json_object *current_obj = root; // Start from the root object
+
+    while (token != NULL) {
+        json_object *obj = NULL;
+        if (!json_object_object_get_ex(current_obj, token, &obj)) {
+            // If the object doesn't exist, create a new one
+            obj = json_object_new_object();
+            json_object_object_add(current_obj, token, obj);
+        }
+        current_obj = obj; // Move to the next level
+        token = strtok(NULL, "/");
+    }
+
+    free(path_copy); // Free the duplicated path
+    return current_obj;
 }
 
 static void RecurseDirectory(const char *path) {
@@ -239,7 +316,14 @@ static void RecurseDirectory(const char *path) {
                 for (int i = 0; i < sizeof(file_types) / sizeof(FileTypeEntry);
                      i++) {
                     if (strcmp(ext, file_types[i].extension) == 0) {
-                        file_types[i].process_func(fullpath);
+                        int id = file_types[i].process_func(fullpath);
+
+                        json_object *last_object = create_json_objects(
+                            json_root, get_dirname(fullpath));
+                        json_object_object_add(last_object,
+                                               get_filename(fullpath),
+                                               json_object_new_int(id));
+
                         return;
                     }
                 }
@@ -275,16 +359,34 @@ int main(int argc, char *argv[]) {
     int opt;
     char *input_directory = NULL;
     char *output_file = NULL;
+    char *output_json_file = NULL;
+    bool json_prettify = false;
+
+    const char *help_format_str =
+        "Usage: %s [-o output_file] [--json-prettify] input_directory\n";
 
     // Parse command-line options
-    while ((opt = getopt(argc, argv, "o:")) != -1) {
+    while ((opt = getopt(argc, argv, "o:-:h")) != -1) {
         switch (opt) {
         case 'o':
             output_file = optarg;
+            output_json_file = optarg;
+            strcat(output_json_file, ".json");
             break;
+        case '-':
+            if (strcmp(optarg, "help") == 0) {
+                fprintf(stdout, help_format_str, argv[0]);
+                exit(EXIT_SUCCESS);
+            }
+            if (strcmp(optarg, "json-prettify") == 0) {
+                json_prettify = true;
+            }
+            break;
+        case 'h':
+            fprintf(stdout, help_format_str, argv[0]);
+            exit(EXIT_SUCCESS);
         default:
-            fprintf(stderr, "Usage: %s [-o output_file] input_directory\n",
-                    argv[0]);
+            fprintf(stderr, help_format_str, argv[0]);
             exit(EXIT_FAILURE);
         }
     }
@@ -294,14 +396,14 @@ int main(int argc, char *argv[]) {
         input_directory = argv[optind];
     } else {
         fprintf(stderr, "Input directory must be provided.\n");
-        fprintf(stderr, "Usage: %s [-o output_file] input_directory\n",
-                argv[0]);
+        fprintf(stderr, help_format_str, argv[0]);
         exit(EXIT_FAILURE);
     }
 
     // Set default output file if not provided
     if (output_file == NULL) {
         output_file = DEFAULT_OUTPUT_FILE;
+        output_json_file = DEFAULT_OUTPUT_JSON_FILE;
     }
 
     // Your logic goes here
@@ -332,9 +434,25 @@ int main(int argc, char *argv[]) {
 
     unsigned char *buffer = NULL;
 
+    json_root = json_object_new_object();
+
     // recurse directory
     RecurseDirectory(input_directory);
 
+    int json_flags = JSON_C_TO_STRING_PLAIN;
+
+    if (json_prettify) {
+        json_flags |= JSON_C_TO_STRING_SPACED;
+        json_flags |= JSON_C_TO_STRING_PRETTY;
+    }
+
+    // save json
+    if (json_object_to_file_ext(output_json_file, json_root, json_flags))
+        printf("Error: failed to save rres IDs JSON %s.\n", output_json_file);
+    else
+        printf("rres IDs JSON %s saved.\n", output_json_file);
+
+    json_object_put(json_root);
     fclose(rres_file);
 
     return 0;

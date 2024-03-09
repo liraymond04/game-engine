@@ -29,6 +29,12 @@ if (NOT raylib_FOUND)
     fetch_and_build_project(raylib https://github.com/raysan5/raylib/archive/refs/tags/${RAYLIB_VERSION}.tar.gz)
 endif()
 
+set(JSON_C_VERSION "0.17-20230812")
+find_package(json-c QUIET)
+if (NOT json-c_FOUND OR WIN32)
+    fetch_and_build_project(json-c https://github.com/json-c/json-c/archive/refs/tags/json-c-${JSON_C_VERSION}.tar.gz)
+endif()
+
 # Set the directory containing source files
 set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 
@@ -45,5 +51,5 @@ foreach(SOURCE_FILE ${SOURCE_FILES})
     # Create the executable
     add_executable(${EXECUTABLE_NAME} ${SOURCE_FILE})
     # Link libraries
-    target_link_libraries(${EXECUTABLE_NAME} raylib -lm)
+    target_link_libraries(${EXECUTABLE_NAME} raylib -lm json-c)
 endforeach()
