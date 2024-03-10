@@ -23,9 +23,9 @@ echo $debug_flag
 
 cmake_flags=("$debug_flag")
 if ! $build_examples; then
-  cmake_flags+=("-DBUILD_EXAMPLES=OFF")
+  cmake_flags+=("-DBUILD_EXAMPLE=OFF")
 else
-  cmake_flags+=("-DBUILD_EXAMPLES=ON")
+  cmake_flags+=("-DBUILD_EXAMPLE=ON")
 fi
 if ! $build_utils; then
   cmake_flags+=("-DBUILD_UTILS=OFF")
@@ -36,11 +36,14 @@ cmake_flags="${cmake_flags[@]}"
 
 if [[ $target_flag == "web" ]]; then
   echo 'Building for Emscripten..'
-  [ ! -d "build/" ] && mkdir build
-  cd build
-  emcmake cmake .. -DPLATFORM=Web $cmake_flags -DCMAKE_EXE_LINKER_FLAGS="-s USE_GLFW=3" -DCMAKE_EXECUTABLE_SUFFIX=".html"
-  emmake make
-  cd ..
+  emcmake cmake . \
+        $cmake_flags \
+        -DPLATFORM=Web \
+        -DCMAKE_EXE_LINKER_FLAGS="-s USE_GLFW=3" \
+        -DCMAKE_EXECUTABLE_SUFFIX=".html" \
+        -G Ninja \
+        -B build-web
+  cmake --build build-web
 elif [[ $target_flag == "windows" ]]; then
   export PATH=~/my_msvc/opt/msvc/bin/x64:$PATH
   [ ! -d "build/" ] && mkdir build

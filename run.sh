@@ -1,8 +1,31 @@
 #!/bin/bash
 
+# Default value for the project type flag
+project_type=""
+
+# Parse command-line arguments
+while getopts ":t:" opt; do
+  case $opt in
+    t)
+      project_type="$OPTARG"
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
+
+# Shift option index so $1 now refers to the first non-option argument
+shift $((OPTIND -1))
+
 # Check if an argument is provided
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 <example_project>"
+    echo "Usage: $0 [-t <web>] <example_project>"
     exit 1
 fi
 
@@ -14,6 +37,9 @@ root_directory="$(pwd)"
 
 # Check if the build directory exists
 build_directory="$root_directory/build"
+if [ "$project_type" == "web" ]; then
+    build_directory="$root_directory/build-web"
+fi
 if [ ! -d "$build_directory" ]; then
     echo "Error: Build directory not found. Please build the project first."
     exit 1

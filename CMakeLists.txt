@@ -5,7 +5,7 @@ project(main)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Option to build examples
-option(BUILD_EXAMPLES "Build examples" ON)
+option(BUILD_EXAMPLE "Build examples" ON)
 
 # Option to build utils
 option(BUILD_UTILS "Build utils" ON)
@@ -19,7 +19,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 add_subdirectory(src)
 
 # example projects
-if(BUILD_EXAMPLES)
+if(BUILD_EXAMPLE)
     if ("${PLATFORM}" STREQUAL "Web")
         add_subdirectory(examples/holojam)
     else()
@@ -27,7 +27,6 @@ if(BUILD_EXAMPLES)
         add_subdirectory(examples/holojam)
     endif()
 endif()
-
 
 # utils
 if(BUILD_UTILS)
