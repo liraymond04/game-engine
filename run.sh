@@ -25,7 +25,7 @@ shift $((OPTIND -1))
 
 # Check if an argument is provided
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 [-t <web>] <example_project>"
+    echo "Usage: $0 [-t <web|windows>] <example_project>"
     exit 1
 fi
 
@@ -39,6 +39,9 @@ root_directory="$(pwd)"
 build_directory="$root_directory/build"
 if [ "$project_type" == "web" ]; then
     build_directory="$root_directory/build-web"
+fi
+if [ "$project_type" == "windows" ]; then
+    build_directory="$root_directory/build-windows"
 fi
 if [ ! -d "$build_directory" ]; then
     echo "Error: Build directory not found. Please build the project first."
@@ -60,8 +63,16 @@ if [ -f "$html_file" ]; then
     exit 0
 fi
 
+
+
+executable=""
+if [ "$project_type" == "windows" ]; then
+    executable="$example_directory/$example_project.exe"
+else
+    executable="$example_directory/$example_project"
+fi
+
 # Check if the executable exists
-executable="$example_directory/$example_project"
 if [ ! -f "$executable" ]; then
     echo "Error: Build does not exist for '$example_project'."
     exit 1
@@ -83,6 +94,11 @@ for file in "$root_directory/lua"/*; do
         ln -s $file "$output_directory/$filename"
     fi
 done
+
+# Copy engine DLL to running directory
+if [ "$project_type" == "windows" ]; then
+    cp "$build_directory/src/engine.dll" "$running_directory"
+fi
 
 cd $running_directory
 

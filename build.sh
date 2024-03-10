@@ -46,8 +46,8 @@ if [[ $target_flag == "web" ]]; then
   cmake --build build-web
 elif [[ $target_flag == "windows" ]]; then
   export PATH=~/my_msvc/opt/msvc/bin/x64:$PATH
-  [ ! -d "build/" ] && mkdir build
-  cd build
+  [ ! -d "build-windows/" ] && mkdir build-windows
+  cd build-windows
   CC=cl CXX=cl cmake \
         $cmake_flags \
         -DCMAKE_SYSTEM_NAME=Windows \

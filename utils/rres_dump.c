@@ -11,7 +11,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+#include "windows/getopt.h"
+#else
+#include <getopt.h>
+#endif
 
 #define DEFAULT_OUTPUT_DIR "assets"
 
@@ -52,17 +57,21 @@ int main(int argc, char *argv[]) {
     printf("Output directory: %s\n", output_directory);
     printf("Input file: %s\n", input_file);
 
-    void *data = NULL;              // Store RRES_DATA_RAW loaded data
-    char *text = NULL;              // Store RRES_DATA_TEXT loaded data
-    Texture2D texture = { 0 };      // Store RRES_DATA_IMAGE loaded data -> LoadTextureFromImage()
-    Sound sound = { 0 };            // Store RRES_DATA_WAVE loaded data -> LoadSoundFromWave()
-    Font font = { 0 };              // Store RRES_DATA_FONT_GLYPHS + RRES_DATA_IMAGE
+    void *data = NULL; // Store RRES_DATA_RAW loaded data
+    char *text = NULL; // Store RRES_DATA_TEXT loaded data
+    Texture2D texture = {
+        0
+    }; // Store RRES_DATA_IMAGE loaded data -> LoadTextureFromImage()
+    Sound sound = {
+        0
+    }; // Store RRES_DATA_WAVE loaded data -> LoadSoundFromWave()
+    Font font = { 0 }; // Store RRES_DATA_FONT_GLYPHS + RRES_DATA_IMAGE
 
     // Load content from rres file
     rresResourceChunk chunk = { 0 }; // Single resource chunk
     rresResourceMulti multi = { 0 }; // Multiple resource chunks
 
-    int result = 0;     // Result of data unpacking
+    int result = 0; // Result of data unpacking
 
     //------------------------------------------------------------------------------------------------------
 
