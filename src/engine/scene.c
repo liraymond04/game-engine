@@ -1,6 +1,14 @@
 #include "engine.h"
 #include "scene.h"
 
+#if defined(__EMSCRIPTEN__)
+extern void Init(Engine_t *engine);
+extern void ProcessInput(Engine_t *engine);
+extern void Update(Engine_t *engine);
+extern void Draw(Engine_t *engine);
+extern void Cleanup(Engine_t *engine);
+#endif
+
 void Engine_Scene_Load(Engine_t *engine, const char *scene_path) {
     if (engine->current_scene == NULL) {
         engine->current_scene = (Scene_t *)malloc(sizeof(Scene_t));
@@ -8,6 +16,13 @@ void Engine_Scene_Load(Engine_t *engine, const char *scene_path) {
 
     Scene_t *scene = engine->current_scene;
 
+#if defined(__EMSCRIPTEN__)
+    scene->interface.Init = Init;
+    scene->interface.ProcessInput = ProcessInput;
+    scene->interface.Update = Update;
+    scene->interface.Draw = Draw;
+    scene->interface.Cleanup = Cleanup;
+#else
     char full_scene_path[256];
     snprintf(full_scene_path, sizeof(full_scene_path), "%s.%s", scene_path,
              DLL_EXTENSION);
@@ -38,6 +53,7 @@ void Engine_Scene_Load(Engine_t *engine, const char *scene_path) {
                 platform_get_error());
         exit(EXIT_FAILURE);
     }
+#endif
 }
 
 void Engine_Scene_Switch(Engine_t *engine, const char *new_scene_path) {

@@ -20,9 +20,14 @@ add_subdirectory(src)
 
 # example projects
 if(BUILD_EXAMPLES)
-    add_subdirectory(examples/test-game)
-    add_subdirectory(examples/holojam)
+    if ("${PLATFORM}" STREQUAL "Web")
+        add_subdirectory(examples/holojam)
+    else()
+        add_subdirectory(examples/test-game)
+        add_subdirectory(examples/holojam)
+    endif()
 endif()
+
 
 # utils
 if(BUILD_UTILS)

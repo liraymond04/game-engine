@@ -50,8 +50,8 @@ void Engine_Init(Engine_t *engine, int canvasWidth, int canvasHeight, int scale,
 }
 
 void Engine_Run(Engine_t *engine) {
-#if defined(PLATFORM_WEB)
-    emscripten_set_main_loop(UpdateDrawFrame, engine, 0, 1);
+#if defined(__EMSCRIPTEN__)
+    emscripten_set_main_loop_arg(UpdateDrawFrame, engine, 0, 1);
 #else
     UpdateDrawFrame(engine);
 #endif
@@ -121,9 +121,11 @@ void Engine_Cleanup(Engine_t *engine) {
     if (current_scene != NULL) {
         current_scene->interface.Cleanup(engine);
 
+#ifndef __EMSCRIPTEN__
         if (current_scene->library_handle) {
             platform_free_library(current_scene->library_handle);
         }
+#endif
 
         free(current_scene);
         engine->current_scene = NULL;
