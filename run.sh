@@ -26,6 +26,14 @@ if [ ! -d "$example_directory" ]; then
     exit 1
 fi
 
+# Check if there's an HTML file with the project name
+html_file="$example_directory/$example_project.html"
+if [ -f "$html_file" ]; then
+    echo "Found HTML file for $example_project. Opening Emscripten web server..."
+    emrun "$html_file"
+    exit 0
+fi
+
 # Check if the executable exists
 executable="$example_directory/$example_project"
 if [ ! -f "$executable" ]; then
@@ -33,6 +41,7 @@ if [ ! -f "$executable" ]; then
     exit 1
 fi
 
+# Check if the running directory exists
 running_directory="$root_directory/examples/$example_project"
 if [ ! -d "$running_directory" ]; then
     echo "Error: Running directory does not exist for '$example_project'."
