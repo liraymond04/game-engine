@@ -148,7 +148,7 @@ static void watch_callback(dmon_watch_id watch_id, dmon_action action,
         break;
     }
 
-    char init_path[256];
+    char init_path[PATH_MAX];
     snprintf(init_path, sizeof(init_path), "%sinit.lua", rootdir);
 
     struct ZIterator *hook_iterator;
@@ -169,7 +169,7 @@ static void watch_callback(dmon_watch_id watch_id, dmon_action action,
 #endif
 
 bool LoadMod(Engine_t *engine, const char *mod_dir, const char *mod_name) {
-    char init_path[256];
+    char init_path[PATH_MAX];
     snprintf(init_path, sizeof(init_path), "%s/init.lua", mod_dir);
 #ifndef __EMSCRIPTEN__
     if (!_dmon_init) {
@@ -186,7 +186,7 @@ bool LoadMod(Engine_t *engine, const char *mod_dir, const char *mod_name) {
 
 bool LoadModsRecurse(Engine_t *engine, const char *mods_dir,
                      const char *mod_name) {
-    char manifest_path[256];
+    char manifest_path[PATH_MAX];
     snprintf(manifest_path, sizeof(manifest_path), "%s/%s/manifest.json",
              mods_dir, mod_name);
 
@@ -225,7 +225,7 @@ bool LoadModsRecurse(Engine_t *engine, const char *mods_dir,
         }
     }
 
-    char mod_dir[256];
+    char mod_dir[PATH_MAX];
     snprintf(mod_dir, sizeof(manifest_path), "%s/%s", mods_dir, mod_name);
 
     return LoadMod(engine, mod_dir, mod_name);

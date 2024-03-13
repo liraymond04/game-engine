@@ -22,6 +22,10 @@
 #include "containers/zhash-c/zhash.h"
 #include "containers/zhash-c/zsorted_hash.h"
 
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
+
 typedef struct Engine {
     struct ZSortedHashTable *hooks;
     lua_State *L;
