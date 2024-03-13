@@ -28,6 +28,8 @@
 
 #include <limits.h>
 
+#include "filetype.h"
+
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
@@ -35,19 +37,16 @@
 #define DEFAULT_OUTPUT_FILE "data.rres"
 #define DEFAULT_OUTPUT_JSON_FILE "data.rres.json"
 
-typedef struct {
-    const char *extension;
-    int (*process_func)(const char *);
-} FileTypeEntry;
-
 static int PackTEXT(const char *filepath);
 static int PackIMGE(const char *filepath);
 static int PackWAVE(const char *filepath);
 
 const FileTypeEntry file_types[] = {
-    { ".png", PackIMGE }, //
-    { ".jpg", PackIMGE }, //
-    { ".txt", PackTEXT }, //
+    { IMGE, ".png", PackIMGE },  //
+    { IMGE, ".jpg", PackIMGE },  //
+    { IMGE, ".jpeg", PackIMGE }, //
+    { TEXT, ".txt", PackTEXT },  //
+    { TEXT, ".wav", PackWAVE },  //
     // Add more file types as needed
 };
 
@@ -308,7 +307,7 @@ static void RecurseDirectory(const char *path) {
     }
 
     while ((entry = readdir(dir)) != NULL) {
-        char fullpath[1024];
+        char fullpath[PATH_MAX];
         snprintf(fullpath, sizeof(fullpath), "%s/%s", path, entry->d_name);
 
         if (stat(fullpath, &statbuf) == -1) {
@@ -330,20 +329,25 @@ static void RecurseDirectory(const char *path) {
                 for (int i = 0; i < sizeof(file_types) / sizeof(FileTypeEntry);
                      i++) {
                     if (strcmp(ext, file_types[i].extension) == 0) {
+                        // Pack into rres file
                         int id = file_types[i].process_func(fullpath);
 
+                        // Add entry to data JSON
                         json_object *last_object = create_json_objects(
                             json_root, get_dirname(fullpath));
+                        json_object *result = json_object_new_array();
+                        json_object_array_add(
+                            result, json_object_new_int(file_types[i].type));
+                        json_object_array_add(result, json_object_new_int(id));
                         json_object_object_add(last_object,
-                                               get_filename(fullpath),
-                                               json_object_new_int(id));
-
-                        return;
+                                               get_filename(fullpath), result);
+                        break;
                     }
                 }
+            } else {
+                // If the file type is not found, handle it here
+                printf("Unknown file type: %s\n", fullpath);
             }
-            // If the file type is not found, handle it here
-            printf("Unknown file type: %s\n", fullpath);
         }
     }
 
@@ -373,7 +377,7 @@ int main(int argc, char *argv[]) {
     int opt;
     char *input_directory = NULL;
     char *output_file = NULL;
-    char *output_json_file = NULL;
+    char output_json_file[PATH_MAX];
     bool json_prettify = false;
 
     const char *help_format_str =
@@ -384,7 +388,7 @@ int main(int argc, char *argv[]) {
         switch (opt) {
         case 'o':
             output_file = optarg;
-            output_json_file = optarg;
+            strcpy(output_json_file, output_file);
             strcat(output_json_file, ".json");
             break;
         case '-':
@@ -417,14 +421,14 @@ int main(int argc, char *argv[]) {
     // Set default output file if not provided
     if (output_file == NULL) {
         output_file = DEFAULT_OUTPUT_FILE;
-        output_json_file = DEFAULT_OUTPUT_JSON_FILE;
+        strcpy(output_json_file, DEFAULT_OUTPUT_JSON_FILE);
     }
 
     // Your logic goes here
     printf("Output file: %s\n", output_file);
     printf("Input directory: %s\n", input_directory);
 
-    rres_file = fopen("data.rres", "wb");
+    rres_file = fopen(output_file, "wb");
 
     // Define rres file header
     // NOTE: We are loading 4 files that generate 5 resource chunks to save in
