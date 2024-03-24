@@ -132,13 +132,13 @@ void DumpWAVE(const char *rres_file, const char *filename, const char *fullpath,
 void DumpFile(const char *rres_file, const char *filename, const char *fullpath,
               int type, int resource_id) {
     switch (type) {
-    case TEXT:
+    case FILETYPE_TEXT:
         DumpTEXT(rres_file, filename, fullpath, resource_id);
         break;
-    case IMGE:
+    case FILETYPE_IMGE:
         DumpIMGE(rres_file, filename, fullpath, resource_id);
         break;
-    case WAVE:
+    case FILETYPE_WAVE:
         DumpWAVE(rres_file, filename, fullpath, resource_id);
         break;
     default:

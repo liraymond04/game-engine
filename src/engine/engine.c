@@ -142,5 +142,9 @@ void Engine_Cleanup(Engine_t *engine) {
 
     event_system_free();
 
+    if (engine->rres_info != NULL) {
+        json_object_put(engine->rres_info);
+    }
+
     CloseWindow();
 }

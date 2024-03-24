@@ -42,11 +42,11 @@ static int PackIMGE(const char *filepath);
 static int PackWAVE(const char *filepath);
 
 const FileTypeEntry file_types[] = {
-    { IMGE, ".png", PackIMGE },  //
-    { IMGE, ".jpg", PackIMGE },  //
-    { IMGE, ".jpeg", PackIMGE }, //
-    { TEXT, ".txt", PackTEXT },  //
-    { TEXT, ".wav", PackWAVE },  //
+    { FILETYPE_IMGE, ".png", PackIMGE },  //
+    { FILETYPE_IMGE, ".jpg", PackIMGE },  //
+    { FILETYPE_IMGE, ".jpeg", PackIMGE }, //
+    { FILETYPE_TEXT, ".txt", PackTEXT },  //
+    { FILETYPE_TEXT, ".wav", PackWAVE },  //
     // Add more file types as needed
 };
 

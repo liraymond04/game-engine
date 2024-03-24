@@ -33,6 +33,34 @@ function Color:__tostring()
     return string.format("Color(R:%d, G:%d, B:%d, A:%d)", self.r, self.g, self.b, self.a)
 end
 
+---
+---Texture2D class that holds information about a loaded texture in memory.
+---@class Texture2D
+---@field id integer OpenGL texture id
+---@field width integer Texture2D base width
+---@field height integer Texture2D base height
+---@field mipmaps integer Mipmap levels, 1 by default
+---@field format integer Data format (PixelFormat type)
+---
+Texture2D = {}
+Texture2D.__index = Texture2D
+
+---Constructor function to create a new Texture2D object
+---@param id integer OpenGL texture id
+---@param width integer Texture2D base width
+---@param height integer Texture2D base height
+---@param mipmaps integer Mipmap levels, 1 by default
+---@param format integer Data format (PixelFormat type)
+function Texture2D.new(id, width, height, mipmaps, format)
+    local self = setmetatable({}, Texture2D)
+    self.id = id or 0
+    self.width = width or 0
+    self.height = height or 0
+    self.mipmaps = mipmaps or 0
+    self.format = format or 0
+    return self
+end
+
 --------------------------------------------------------------------------------
 --- Raylib
 --------------------------------------------------------------------------------
@@ -70,6 +98,15 @@ function IsKeyReleased(key) end
 ---@return boolean True if the key has been pressed again.
 ---
 function IsKeyPressedRepeat(key) end
+
+---
+---Draw texture
+---@param texture Texture2D The texture to draw.
+---@param posX integer The x-coordinate of the texture.
+---@param posY integer The y-coordinate of the texture.
+---@param tint Color The tint of the texture.
+---
+function DrawTexture(texture, posX, posY, tint) end
 
 ---
 ---Draw text (using default font)

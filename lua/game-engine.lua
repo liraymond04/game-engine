@@ -26,6 +26,12 @@ function Engine_Scene_Switch(new_scene_path) end
 function Engine_Mod_Scene_Switch(scene_name) end
 
 ---
+---Load an asset texture from resources.
+---@param texture_path string Path to asset texture
+---
+function Engine_LoadTexture2D(texture_path) end
+
+---
 ---Registers to listen for when events are sent with the provided code.
 ---Events with duplicate listener/callback combos will not be registered
 ---again and will cause this to return false.

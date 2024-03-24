@@ -2,10 +2,10 @@
 #define UTILS_FILETYPE
 
 typedef enum FileType {
-    TEXT, //
-    IMGE, //
-    WAVE, //
-    FILE_TYPE_COUNT
+    FILETYPE_TEXT, //
+    FILETYPE_IMGE, //
+    FILETYPE_WAVE, //
+    FILETYPE_COUNT
 } FileType;
 
 typedef struct {

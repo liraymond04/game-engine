@@ -11,6 +11,7 @@ static Engine_t *engine_context;
 void map_keys();
 void map_enums(lua_State *L);
 
+static Texture2D luaL_checktexture2d(lua_State *L, int arg);
 static Color luaL_checkcolor(lua_State *L, int arg);
 static struct nk_rect luaL_checknkrect(lua_State *L, int arg);
 static struct nk_vec2 luaL_checkvec2(lua_State *L, int arg);
@@ -27,6 +28,7 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, IsKeyPressed);
     LUA_REGISTER_FUNCTION(engine->L, IsKeyReleased);
     LUA_REGISTER_FUNCTION(engine->L, IsKeyPressedRepeat);
+    LUA_REGISTER_FUNCTION(engine->L, DrawTexture);
     LUA_REGISTER_FUNCTION(engine->L, DrawText);
     LUA_REGISTER_FUNCTION(engine->L, DrawLine);
     LUA_REGISTER_FUNCTION(engine->L, DrawRectangle);
@@ -50,6 +52,7 @@ void Engine_BindCFunctions(Engine_t *engine) {
     /* Engine */
     LUA_REGISTER_FUNCTION(engine->L, Engine_Scene_Switch);
     LUA_REGISTER_FUNCTION(engine->L, Engine_Mod_Scene_Switch);
+    LUA_REGISTER_FUNCTION(engine->L, Engine_LoadTexture2D);
     LUA_REGISTER_FUNCTION(engine->L, event_register);
     LUA_REGISTER_FUNCTION(engine->L, event_unregister);
     LUA_REGISTER_FUNCTION(engine->L, event_fire);
@@ -113,6 +116,17 @@ int _DrawText(lua_State *L) {
     Color color = luaL_checkcolor(L, 5);
 
     DrawText(text, posX, posY, fontSize, color);
+
+    return 0;
+}
+
+int _DrawTexture(lua_State *L) {
+    Texture2D texture = luaL_checktexture2d(L, 1);
+    int posX = luaL_checkinteger(L, 2);
+    int posY = luaL_checkinteger(L, 3);
+    Color tint = luaL_checkcolor(L, 4);
+
+    DrawTexture(texture, posX, posY, tint);
 
     return 0;
 }
@@ -267,7 +281,7 @@ int _nk_color_picker(lua_State *L) {
 
     // Create a Lua script string to create a Color object
     const char *script = "return Color.new(%d, %d, %d, %d)";
-    char buffer[100];
+    char buffer[256];
     snprintf(buffer, sizeof(buffer), script, raylib_color.r, raylib_color.g,
              raylib_color.b, raylib_color.a);
 
@@ -305,6 +319,23 @@ int _Engine_Mod_Scene_Switch(lua_State *L) {
     Engine_Mod_Scene_Switch(engine_context, name);
 
     return 0;
+}
+
+int _Engine_LoadTexture2D(lua_State *L) {
+    Texture2D texture;
+    const char *texture_path = luaL_checkstring(L, 1);
+
+    Engine_LoadTexture2D(engine_context, texture_path, &texture);
+
+    // Create a Lua script string to create a Texture2D object
+    const char *script = "return Texture2D.new(%d, %d, %d, %d, %d)";
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer), script, texture.id, texture.width,
+             texture.height, texture.mipmaps, texture.format);
+
+    luaL_dostring(L, buffer);
+
+    return 1;
 }
 
 int _event_register(lua_State *L) {
@@ -345,6 +376,21 @@ int _event_fire(lua_State *L) {
     lua_pushboolean(L, ret);
 
     return 1;
+}
+
+static Texture2D luaL_checktexture2d(lua_State *L, int arg) {
+    luaL_checktype(L, arg, LUA_TTABLE);
+    lua_getfield(L, arg, "id");
+    lua_getfield(L, arg, "width");
+    lua_getfield(L, arg, "height");
+    lua_getfield(L, arg, "mipmaps");
+    lua_getfield(L, arg, "format");
+
+    Texture2D texture = { luaL_checkinteger(L, -5), luaL_checkinteger(L, -4),
+                          luaL_checkinteger(L, -3), luaL_checkinteger(L, -2),
+                          luaL_checkinteger(L, -1) };
+
+    return texture;
 }
 
 static Color luaL_checkcolor(lua_State *L, int arg) {

@@ -15,6 +15,7 @@ int _IsKeyUp(lua_State *L);
 int _IsKeyPressed(lua_State *L);
 int _IsKeyReleased(lua_State *L);
 int _IsKeyPressedRepeat(lua_State *L);
+int _DrawTexture(lua_State *L);
 int _DrawText(lua_State *L);
 int _DrawLine(lua_State *L);
 int _DrawRectangle(lua_State *L);
@@ -38,6 +39,7 @@ int _nk_propertyf(lua_State *L);
 /* Engine */
 int _Engine_Scene_Switch(lua_State *L);
 int _Engine_Mod_Scene_Switch(lua_State *L);
+int _Engine_LoadTexture2D(lua_State *L);
 int _event_register(lua_State *L);
 int _event_unregister(lua_State *L);
 int _event_fire(lua_State *L);

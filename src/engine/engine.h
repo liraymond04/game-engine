@@ -19,6 +19,8 @@
 
 #include "platform/platform.h"
 
+#include "resource.h"
+
 #include "containers/zhash-c/zhash.h"
 #include "containers/zhash-c/zsorted_hash.h"
 
@@ -43,6 +45,9 @@ typedef struct Engine {
     float aspect_ratio;
     int screenWidth;
     int screenHeight;
+
+    char rres_file[PATH_MAX];
+    json_object *rres_info;
 
     struct nk_context *nk_ctx;
 
