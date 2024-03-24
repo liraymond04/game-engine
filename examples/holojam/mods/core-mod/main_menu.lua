@@ -52,7 +52,8 @@ end)
 
 RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
   if player_texture then
-    DrawTexture(player_texture, 25, 25, Color.new(255, 255, 255, 255))
+    -- DrawTexture(player_texture, 25, 25, Color.new(255, 255, 255, 255))
+    DrawTexturePro(player_texture, Rectangle.new(0, 0, 32, 32), Rectangle.new(30, 30, 50, 50), Vector2.new(0, 0), 0, Color.new(255, 255, 255, 255))
   end
 
   DrawRectangle(player_x, player_y, 20, 20, bg)

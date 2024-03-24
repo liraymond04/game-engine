@@ -61,6 +61,50 @@ function Texture2D.new(id, width, height, mipmaps, format)
     return self
 end
 
+---
+---Rectangle class that holds information about a rectangle in raylib
+---@class Rectangle
+---@field x number Rectangle top-left corner position x
+---@field y number Rectangle top-left corner position y
+---@field width number Rectangle width
+---@field height number Rectangle height
+---
+Rectangle = {}
+Rectangle.__index = Rectangle
+
+---Constuctor function to create a new Rectangle object
+---@param x number Rectangle top-left corner position x
+---@param y number Rectangle top-left corner position y
+---@param width number Rectangle width
+---@param height number Rectangle height
+function Rectangle.new(x, y, width, height)
+    local self = setmetatable({}, Rectangle)
+    self.x = x
+    self.y = y
+    self.width = width
+    self.height = height
+    return self
+end
+
+---
+---Vector2 class that holds information about a two dimensional vector
+---@class Vector2
+---@field x number Vector x component
+---@field y number Vector y component
+---
+Vector2 = {}
+Vector2.__index = Vector2
+
+---Constructor function to create a new Vector2 object
+---@param x number Vector x component
+---@param y number Vector y component
+function Vector2.new(x, y)
+    local self = setmetatable({}, Vector2)
+    self.x = x
+    self.y = y
+    return self
+end
+
 --------------------------------------------------------------------------------
 --- Raylib
 --------------------------------------------------------------------------------
@@ -107,6 +151,17 @@ function IsKeyPressedRepeat(key) end
 ---@param tint Color The tint of the texture.
 ---
 function DrawTexture(texture, posX, posY, tint) end
+
+---
+---Draw a part of a texture (defined by a rectangle) with 'pro' parameters
+---@param texture Texture2D The texture to draw.
+---@param source Rectangle Source dimensions
+---@param dest Rectangle Destination dimensions
+---@param origin Vector2 Origin coordinates of the texture
+---@param rotation number Rotation of the texture
+---@param tint Color The tint of the texture.
+---
+function DrawTexturePro(texture, source, dest, origin, rotation, tint) end
 
 ---
 ---Draw text (using default font)

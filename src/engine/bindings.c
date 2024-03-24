@@ -12,6 +12,8 @@ void map_keys();
 void map_enums(lua_State *L);
 
 static Texture2D luaL_checktexture2d(lua_State *L, int arg);
+static Rectangle luaL_checkrectangle(lua_State *L, int arg);
+static Vector2 luaL_checkvector2(lua_State *L, int arg);
 static Color luaL_checkcolor(lua_State *L, int arg);
 static struct nk_rect luaL_checknkrect(lua_State *L, int arg);
 static struct nk_vec2 luaL_checkvec2(lua_State *L, int arg);
@@ -29,6 +31,7 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, IsKeyReleased);
     LUA_REGISTER_FUNCTION(engine->L, IsKeyPressedRepeat);
     LUA_REGISTER_FUNCTION(engine->L, DrawTexture);
+    LUA_REGISTER_FUNCTION(engine->L, DrawTexturePro);
     LUA_REGISTER_FUNCTION(engine->L, DrawText);
     LUA_REGISTER_FUNCTION(engine->L, DrawLine);
     LUA_REGISTER_FUNCTION(engine->L, DrawRectangle);
@@ -127,6 +130,19 @@ int _DrawTexture(lua_State *L) {
     Color tint = luaL_checkcolor(L, 4);
 
     DrawTexture(texture, posX, posY, tint);
+
+    return 0;
+}
+
+int _DrawTexturePro(lua_State *L) {
+    Texture2D texture = luaL_checktexture2d(L, 1);
+    Rectangle source = luaL_checkrectangle(L, 2);
+    Rectangle dest = luaL_checkrectangle(L, 3);
+    Vector2 origin = luaL_checkvector2(L, 4);
+    float rotation = luaL_checknumber(L, 5);
+    Color tint = luaL_checkcolor(L, 6);
+
+    DrawTexturePro(texture, source, dest, origin, rotation, tint);
 
     return 0;
 }
@@ -391,6 +407,30 @@ static Texture2D luaL_checktexture2d(lua_State *L, int arg) {
                           luaL_checkinteger(L, -1) };
 
     return texture;
+}
+
+static Rectangle luaL_checkrectangle(lua_State *L, int arg) {
+    luaL_checktype(L, arg, LUA_TTABLE);
+    lua_getfield(L, arg, "x");
+    lua_getfield(L, arg, "y");
+    lua_getfield(L, arg, "width");
+    lua_getfield(L, arg, "height");
+
+    Rectangle rectangle = { luaL_checkinteger(L, -4), luaL_checkinteger(L, -3),
+                            luaL_checkinteger(L, -2),
+                            luaL_checkinteger(L, -1) };
+
+    return rectangle;
+}
+
+static Vector2 luaL_checkvector2(lua_State *L, int arg) {
+    luaL_checktype(L, arg, LUA_TTABLE);
+    lua_getfield(L, arg, "x");
+    lua_getfield(L, arg, "y");
+
+    Vector2 vector = { luaL_checkinteger(L, -2), luaL_checkinteger(L, -1) };
+
+    return vector;
 }
 
 static Color luaL_checkcolor(lua_State *L, int arg) {

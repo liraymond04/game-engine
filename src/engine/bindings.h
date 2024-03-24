@@ -16,6 +16,7 @@ int _IsKeyPressed(lua_State *L);
 int _IsKeyReleased(lua_State *L);
 int _IsKeyPressedRepeat(lua_State *L);
 int _DrawTexture(lua_State *L);
+int _DrawTexturePro(lua_State *L);
 int _DrawText(lua_State *L);
 int _DrawLine(lua_State *L);
 int _DrawRectangle(lua_State *L);
