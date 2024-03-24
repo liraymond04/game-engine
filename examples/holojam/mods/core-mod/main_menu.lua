@@ -53,12 +53,13 @@ end)
 RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
   if player_texture then
     -- DrawTexture(player_texture, 25, 25, Color.new(255, 255, 255, 255))
-    DrawTexturePro(player_texture, Rectangle.new(0, 0, 32, 32), Rectangle.new(30, 30, 50, 50), Vector2.zero, 0, Color.WHITE)
+    DrawTexturePro(player_texture, Rectangle.new(0, 0, 32, 32), Rectangle.new(30, 30, 50, 50), Vector2.zero, 0,
+      Color.WHITE)
   end
 
   DrawRectangle(player_x, player_y, 20, 20, bg)
 
-  if nk_begin("Main menu", { 50, 50, 230, 250 }, NK.WINDOW_BORDER | NK.WINDOW_MOVABLE | NK.WINDOW_SCALABLE | NK.WINDOW_MINIMIZABLE | NK.WINDOW_TITLE) then
+  if nk_begin("Main menu", nk_rect.new(50, 50, 230, 250), NK.WINDOW_BORDER | NK.WINDOW_MOVABLE | NK.WINDOW_SCALABLE | NK.WINDOW_MINIMIZABLE | NK.WINDOW_TITLE) then
     EASY = 0
     HARD = 1
     op = op or EASY
@@ -79,7 +80,7 @@ RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
     nk_layout_row_dynamic(20, 1)
     nk_label("background:", 3)
     nk_layout_row_dynamic(25, 1)
-    if nk_combo_begin_color(bg, { nk_widget_width(), 400 }) then
+    if nk_combo_begin_color(bg, nk_vec2.new(nk_widget_width(), 400)) then
       nk_layout_row_dynamic(120, 1)
       bg = nk_color_picker(bg, 1);
       nk_layout_row_dynamic(25, 1)

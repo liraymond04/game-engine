@@ -448,40 +448,24 @@ static Color luaL_checkcolor(lua_State *L, int arg) {
 
 static struct nk_rect luaL_checknkrect(lua_State *L, int arg) {
     luaL_checktype(L, arg, LUA_TTABLE);
+    lua_getfield(L, arg, "x");
+    lua_getfield(L, arg, "y");
+    lua_getfield(L, arg, "w");
+    lua_getfield(L, arg, "h");
 
-    struct nk_rect rect;
-
-    lua_rawgeti(L, arg, 1);
-    rect.x = luaL_checknumber(L, -1);
-    lua_pop(L, 1);
-
-    lua_rawgeti(L, arg, 2);
-    rect.y = luaL_checknumber(L, -1);
-    lua_pop(L, 1);
-
-    lua_rawgeti(L, arg, 3);
-    rect.w = luaL_checknumber(L, -1);
-    lua_pop(L, 1);
-
-    lua_rawgeti(L, arg, 4);
-    rect.h = luaL_checknumber(L, -1);
-    lua_pop(L, 1);
+    struct nk_rect rect = { luaL_checkinteger(L, -4), luaL_checkinteger(L, -3),
+                            luaL_checkinteger(L, -2),
+                            luaL_checkinteger(L, -1) };
 
     return rect;
 }
 
 static struct nk_vec2 luaL_checkvec2(lua_State *L, int arg) {
     luaL_checktype(L, arg, LUA_TTABLE);
+    lua_getfield(L, arg, "x");
+    lua_getfield(L, arg, "y");
 
-    struct nk_vec2 vec;
-
-    lua_rawgeti(L, arg, 1);
-    vec.x = luaL_checknumber(L, -1);
-    lua_pop(L, 1);
-
-    lua_rawgeti(L, arg, 2);
-    vec.y = luaL_checknumber(L, -1);
-    lua_pop(L, 1);
+    struct nk_vec2 vec = { luaL_checkinteger(L, -2), luaL_checkinteger(L, -1) };
 
     return vec;
 }
