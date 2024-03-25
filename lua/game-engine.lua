@@ -10,6 +10,24 @@
 function RegisterFunction(hook_name, function_ref) end
 
 ---
+---Initializes resource group
+---@param group integer Group to initialize
+---
+function Engine_ResourceGroup_Init(group) end
+
+---
+---Frees resource group from memory
+---@param group integer Group to free
+---
+function Engine_ResourceGroup_Free(group) end
+
+---
+---Unloads resources in resource group
+---@param group integer Group to clear
+---
+function Engine_ResourceGroup_Clear(group) end
+
+---
 ---Load and switch to current scene from dynamic library file.
 ---Cleanup functions are run for previous scene, and the init
 ---function is run on startup of new scene.
@@ -26,10 +44,19 @@ function Engine_Scene_Switch(new_scene_path) end
 function Engine_Mod_Scene_Switch(scene_name) end
 
 ---
----Load an asset texture from resources.
----@param texture_path string Path to asset texture
+---Load an asset to resources.
+---@param resource_path string Path to asset
+---@param group integer Resource group to load to
+---@return string | Texture2D | boolean
 ---
-function Engine_LoadTexture2D(texture_path) end
+function Engine_LoadResource(resource_path, group) end
+
+---
+---Load an asset texture from resources.
+---@param id integer Asset id of texture to load
+---@return Texture2D
+---
+function Engine_LoadTexture2D(id) end
 
 ---
 ---Registers to listen for when events are sent with the provided code.

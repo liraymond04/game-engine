@@ -36,6 +36,7 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, DrawLine);
     LUA_REGISTER_FUNCTION(engine->L, DrawRectangle);
     LUA_REGISTER_FUNCTION(engine->L, DrawCircle);
+    LUA_REGISTER_FUNCTION(engine->L, UnloadTexture);
 
     /* Nuklear */
     LUA_REGISTER_FUNCTION(engine->L, nk_begin);
@@ -53,8 +54,12 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, nk_propertyf);
 
     /* Engine */
+    LUA_REGISTER_FUNCTION(engine->L, Engine_ResourceGroup_Init);
+    LUA_REGISTER_FUNCTION(engine->L, Engine_ResourceGroup_Free);
+    LUA_REGISTER_FUNCTION(engine->L, Engine_ResourceGroup_Clear);
     LUA_REGISTER_FUNCTION(engine->L, Engine_Scene_Switch);
     LUA_REGISTER_FUNCTION(engine->L, Engine_Mod_Scene_Switch);
+    LUA_REGISTER_FUNCTION(engine->L, Engine_LoadResource);
     LUA_REGISTER_FUNCTION(engine->L, Engine_LoadTexture2D);
     LUA_REGISTER_FUNCTION(engine->L, event_register);
     LUA_REGISTER_FUNCTION(engine->L, event_unregister);
@@ -178,6 +183,14 @@ int _DrawCircle(lua_State *L) {
     Color color = luaL_checkcolor(L, 4);
 
     DrawCircle(centerX, centerY, radius, color);
+
+    return 0;
+}
+
+int _UnloadTexture(lua_State *L) {
+    Texture2D texture = luaL_checktexture2d(L, 1);
+
+    UnloadTexture(texture);
 
     return 0;
 }
@@ -321,6 +334,30 @@ int _nk_propertyf(lua_State *L) {
     return 1;
 }
 
+int _Engine_ResourceGroup_Init(lua_State *L) {
+    int group = luaL_checkinteger(L, 1);
+
+    Engine_ResourceGroup_Init(engine_context, group);
+
+    return 0;
+}
+
+int _Engine_ResourceGroup_Free(lua_State *L) {
+    int group = luaL_checkinteger(L, 1);
+
+    Engine_ResourceGroup_Free(engine_context, group);
+
+    return 0;
+}
+
+int _Engine_ResourceGroup_Clear(lua_State *L) {
+    int group = luaL_checkinteger(L, 1);
+
+    Engine_ResourceGroup_Clear(engine_context, group);
+
+    return 0;
+}
+
 int _Engine_Scene_Switch(lua_State *L) {
     const char *path = luaL_checkstring(L, 1);
 
@@ -337,11 +374,48 @@ int _Engine_Mod_Scene_Switch(lua_State *L) {
     return 0;
 }
 
+int _Engine_LoadResource(lua_State *L) {
+    void *out;
+    const char *resource_path = luaL_checkstring(L, 1);
+    int group = luaL_checkinteger(L, 2);
+
+    int type;
+    int ret =
+        Engine_LoadResource(engine_context, resource_path, group, &out, &type);
+
+    if (ret) {
+        switch (type) {
+        case FILETYPE_TEXT:
+            break;
+        case FILETYPE_IMGE: {
+            Texture2D texture = *(Texture2D *)out;
+
+            // Create a Lua script string to create a Texture2D object
+            const char *script = "return Texture2D.new(%d, %d, %d, %d, %d)";
+            char buffer[256];
+            snprintf(buffer, sizeof(buffer), script, texture.id, texture.width,
+                     texture.height, texture.mipmaps, texture.format);
+
+            luaL_dostring(L, buffer);
+        } break;
+        case FILETYPE_WAVE:
+            break;
+        default:
+            lua_pushboolean(L, 0);
+            break;
+        }
+    } else {
+        lua_pushboolean(L, ret);
+    }
+
+    return 1;
+}
+
 int _Engine_LoadTexture2D(lua_State *L) {
     Texture2D texture;
-    const char *texture_path = luaL_checkstring(L, 1);
+    int id = luaL_checkinteger(L, 1);
 
-    Engine_LoadTexture2D(engine_context, texture_path, &texture);
+    int ret = Engine_LoadTexture2D(engine_context, id, &texture);
 
     // Create a Lua script string to create a Texture2D object
     const char *script = "return Texture2D.new(%d, %d, %d, %d, %d)";

@@ -21,6 +21,7 @@ int _DrawText(lua_State *L);
 int _DrawLine(lua_State *L);
 int _DrawRectangle(lua_State *L);
 int _DrawCircle(lua_State *L);
+int _UnloadTexture(lua_State *L);
 
 /* Nuklear */
 int _nk_begin(lua_State *L);
@@ -38,8 +39,12 @@ int _nk_color_picker(lua_State *L);
 int _nk_propertyf(lua_State *L);
 
 /* Engine */
+int _Engine_ResourceGroup_Init(lua_State *L);
+int _Engine_ResourceGroup_Free(lua_State *L);
+int _Engine_ResourceGroup_Clear(lua_State *L);
 int _Engine_Scene_Switch(lua_State *L);
 int _Engine_Mod_Scene_Switch(lua_State *L);
+int _Engine_LoadResource(lua_State *L);
 int _Engine_LoadTexture2D(lua_State *L);
 int _event_register(lua_State *L);
 int _event_unregister(lua_State *L);

@@ -13,6 +13,50 @@
 #define RRES_SUPPORT_ENCRYPTION_XCHACHA20
 #include "rres-raylib.h"
 
+void Engine_ResourceGroup_Init(Engine_t *engine, int group) {
+    if (engine->resource_groups[group] != NULL)
+        return;
+
+    engine->resource_groups[group] =
+        (vec_Resource_t *)malloc(sizeof(vec_Resource_t));
+    vec_init(engine->resource_groups[group]);
+}
+
+void Engine_ResourceGroup_Free(Engine_t *engine, int group) {
+    if (engine->resource_groups[group] == NULL)
+        return;
+
+    Engine_ResourceGroup_Clear(engine, group);
+
+    if (group == 0)
+        return;
+
+    vec_deinit(engine->resource_groups[group]);
+    free(engine->resource_groups[group]);
+}
+
+void Engine_ResourceGroup_Clear(Engine_t *engine, int group) {
+    vec_Resource_t *current_group = engine->resource_groups[group];
+
+    for (int i = 0; i < current_group->length; i++) {
+        Resource_t resource = current_group->data[i];
+        switch (resource.type) {
+        case FILETYPE_TEXT:
+            break;
+        case FILETYPE_IMGE:
+            UnloadTexture(*(Texture2D *)resource.data);
+            free(resource.data);
+            break;
+        case FILETYPE_WAVE:
+            break;
+        default:
+            break;
+        }
+    }
+
+    vec_clear(current_group);
+}
+
 void Engine_InitRRESFile(Engine_t *engine, const char *rres_file_path) {
     strcpy(engine->rres_file, rres_file_path);
     // Read data JSON
@@ -21,10 +65,15 @@ void Engine_InitRRESFile(Engine_t *engine, const char *rres_file_path) {
     engine->rres_info = json_object_from_file(json_file);
 }
 
-int Engine_LoadTexture2D(Engine_t *engine, const char *texture_path,
-                          Texture2D *out) {
+int Engine_LoadResource(Engine_t *engine, const char *resource_path, int group,
+                        void **out, int *out_type) {
+    vec_Resource_t *current_group = engine->resource_groups[group];
+    if (current_group == NULL) {
+        return 0;
+    }
+
     char filepath[PATH_MAX];
-    strcpy(filepath, texture_path);
+    strcpy(filepath, resource_path);
 
     char *token;
 
@@ -46,12 +95,12 @@ int Engine_LoadTexture2D(Engine_t *engine, const char *texture_path,
 
     // not a valid path
     if (cur == NULL) {
-        return -1;
+        return 0;
     }
 
     // json object not at a file
     if (json_object_get_type(cur) != json_type_array) {
-        return -2;
+        return 0;
     }
 
     json_object *type_obj = json_object_array_get_idx(cur, 0);
@@ -59,6 +108,31 @@ int Engine_LoadTexture2D(Engine_t *engine, const char *texture_path,
     json_object *id_obj = json_object_array_get_idx(cur, 1);
     int id = json_object_get_int(id_obj);
 
+    *out_type = type;
+
+    int ret = 0;
+    switch (type) {
+    case FILETYPE_TEXT:
+        break;
+    case FILETYPE_IMGE:
+        *out = malloc(sizeof(Texture2D));
+        ret = Engine_LoadTexture2D(engine, id, *out);
+        break;
+    case FILETYPE_WAVE:
+        break;
+    default:
+        break;
+    }
+
+    if (ret) {
+        Resource_t resource = { type, *out };
+        vec_push(current_group, resource);
+    }
+
+    return ret;
+}
+
+int Engine_LoadTexture2D(Engine_t *engine, int id, Texture2D *out) {
     Texture2D texture;
     rresResourceChunk chunk = rresLoadResourceChunk(engine->rres_file, id);
 
@@ -66,12 +140,7 @@ int Engine_LoadTexture2D(Engine_t *engine, const char *texture_path,
 
     // failed loading or unpacking
     if (result != RRES_SUCCESS) {
-        return -3;
-    }
-
-    // not an IMGE file
-    if (type != FILETYPE_IMGE) {
-        return -4;
+        return 0;
     }
 
     Image image = LoadImageFromResource(chunk);

@@ -234,3 +234,9 @@ function DrawRectangle(posX, posY, width, height, color) end
 ---@param color Color The color of the circle.
 ---
 function DrawCircle(centerX, centerY, radius, color) end
+
+---
+---Unload texture from memory
+---@param texture Texture2D Texture to unload
+---
+function UnloadTexture(texture) end

@@ -49,6 +49,8 @@ typedef struct Engine {
     char rres_file[PATH_MAX];
     json_object *rres_info;
 
+    vec_Resource_t *resource_groups[RESOURCE_GROUP_MAX];
+
     struct nk_context *nk_ctx;
 
     RenderTexture2D renderTexture;

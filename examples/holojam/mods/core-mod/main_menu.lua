@@ -8,7 +8,7 @@ RegisterFunction("HOOK_MAIN_MENU_INIT", function()
   player_x = 20
   player_y = 20
 
-  player_texture = Engine_LoadTexture2D("assets/bloofus.png")
+  player_texture = Engine_LoadResource("assets/bloofus.png", 0)
 
   event_register("TEST", "main_menu_listener", function()
     print("main_menu TEST event fired")
@@ -51,7 +51,7 @@ RegisterFunction("HOOK_MAIN_MENU_UPDATE", function()
 end)
 
 RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
-  if player_texture then
+  if player_texture and type(player_texture) == "table" and getmetatable(player_texture) == Texture2D then
     -- DrawTexture(player_texture, 25, 25, Color.new(255, 255, 255, 255))
     DrawTexturePro(player_texture, Rectangle.new(0, 0, 32, 32), Rectangle.new(30, 30, 50, 50), Vector2.zero, 0,
       Color.WHITE)
