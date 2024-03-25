@@ -9,6 +9,8 @@ RegisterFunction("HOOK_MAIN_MENU_INIT", function()
   player_y = 20
 
   player_texture = Engine_LoadResource("assets/bloofus.png", 0)
+  test = Engine_LoadResource("assets/test/one.txt", 0)
+  print(test)
 
   event_register("TEST", "main_menu_listener", function()
     print("main_menu TEST event fired")

@@ -385,8 +385,10 @@ int _Engine_LoadResource(lua_State *L) {
 
     if (ret) {
         switch (type) {
-        case FILETYPE_TEXT:
-            break;
+        case FILETYPE_TEXT: {
+            char *str = (char *)out;
+            lua_pushstring(L, str);
+        } break;
         case FILETYPE_IMGE: {
             Texture2D texture = *(Texture2D *)out;
 

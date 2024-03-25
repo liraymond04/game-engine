@@ -42,6 +42,8 @@ void Engine_ResourceGroup_Clear(Engine_t *engine, int group) {
         Resource_t resource = current_group->data[i];
         switch (resource.type) {
         case FILETYPE_TEXT:
+            // free(resource.data);
+            MemFree(resource.data);
             break;
         case FILETYPE_IMGE:
             UnloadTexture(*(Texture2D *)resource.data);
@@ -113,6 +115,7 @@ int Engine_LoadResource(Engine_t *engine, const char *resource_path, int group,
     int ret = 0;
     switch (type) {
     case FILETYPE_TEXT:
+        ret = Engine_LoadTextFile(engine, id, (char **)&(*out));
         break;
     case FILETYPE_IMGE:
         *out = malloc(sizeof(Texture2D));
@@ -130,6 +133,25 @@ int Engine_LoadResource(Engine_t *engine, const char *resource_path, int group,
     }
 
     return ret;
+}
+
+int Engine_LoadTextFile(Engine_t *engine, int id, char **out) {
+    rresResourceChunk chunk = rresLoadResourceChunk(engine->rres_file, id);
+
+    int result = UnpackResourceChunk(
+        &chunk); // Decompres/decipher resource data (if required)
+
+    if (result == 0) // Data decompressed/decrypted successfully
+    {
+        *out = LoadTextFromResource(
+            chunk); // Load text data, must be freed at the end
+    } else {
+        return 0;
+    }
+
+    rresUnloadResourceChunk(chunk);
+
+    return 1;
 }
 
 int Engine_LoadTexture2D(Engine_t *engine, int id, Texture2D *out) {
