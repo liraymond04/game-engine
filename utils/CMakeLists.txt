@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 3.12)
-project(engine)
+cmake_minimum_required(VERSION 3.11) # FetchContent is available in 3.11+
+project(utils)
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+include_directories(../include)
 
 # Dependencies
 include(FetchContent)
@@ -35,24 +35,21 @@ if (NOT json-c_FOUND OR WIN32)
     fetch_and_build_project(json-c https://github.com/json-c/json-c/archive/refs/tags/json-c-${JSON_C_VERSION}.tar.gz)
 endif()
 
-set(LUA_VERSION 5.4.5)
-find_package(lua_static ${LUA_VERSION} QUIET)
-if (NOT lua_static_FOUND)
-    fetch_and_build_project(lua_static https://github.com/walterschell/Lua/archive/refs/tags/v${LUA_VERSION}.tar.gz)
-endif()
+# Set the directory containing source files
+set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 
-set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+# Get all source files in the utils directory
+file(GLOB SOURCE_FILES "${SOURCE_DIR}/*.c")
 
-file(GLOB_RECURSE SRC_FILES "${SRC_DIR}/engine/*.c")
+# Get all source files in the include directory
+file(GLOB_RECURSE INCLUDE_SOURCE_FILES "../include/*.c")
 
-add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
-
-target_link_libraries(${PROJECT_NAME} raylib -lm lua_static json-c)
-
-# Checks if OSX and links appropriate frameworks (Only required on MacOS)
-if (APPLE)
-    target_link_libraries(${PROJECT_NAME} "-framework IOKit")
-    target_link_libraries(${PROJECT_NAME} "-framework Cocoa")
-    target_link_libraries(${PROJECT_NAME} "-framework OpenGL")
-endif()
-
+# Loop over each source file and create an executable for each
+foreach(SOURCE_FILE ${SOURCE_FILES})
+    # Extract the name of the source file (excluding the extension)
+    get_filename_component(EXECUTABLE_NAME ${SOURCE_FILE} NAME_WE)
+    # Create the executable
+    add_executable(${EXECUTABLE_NAME} ${SOURCE_FILE})
+    # Link libraries
+    target_link_libraries(${EXECUTABLE_NAME} raylib -lm json-c)
+endforeach()

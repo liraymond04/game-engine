@@ -1,3 +1,6 @@
 .cache/
 build/
+build-windows/
+build-web/
 bin/
+*.dll

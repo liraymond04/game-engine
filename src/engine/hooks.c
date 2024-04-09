@@ -2,17 +2,19 @@
 #include "hooks.h"
 #include "bindings.h"
 
-#if defined(_WIN32)           
-	#define NOGDI             // All GDI defines and routines
-	#define NOUSER            // All USER defines and routines
+#if defined(_WIN32)
+#define NOGDI  // All GDI defines and routines
+#define NOUSER // All USER defines and routines
 #endif
 
+#ifndef __EMSCRIPTEN__
 #define DMON_IMPL
 #include "dmon.h"
+#endif
 
-#if defined(_WIN32)           // raylib uses these names as function parameters
-	#undef near
-	#undef far
+#if defined(_WIN32) // raylib uses these names as function parameters
+#undef near
+#undef far
 #endif
 
 static Engine_t *cur_engine = NULL;
@@ -113,6 +115,9 @@ void Engine_InitLua(Engine_t *engine) {
     engine->L = luaL_newstate();
     luaL_openlibs(engine->L);
 
+    // Run metatable definitions
+    luaL_dofile(engine->L, "./bin/include.lua");
+
     // C function bindings
     lua_pushcfunction(engine->L, RegisterFunction);
     lua_setglobal(engine->L, "RegisterFunction");
@@ -120,6 +125,7 @@ void Engine_InitLua(Engine_t *engine) {
     Engine_BindCFunctions(engine);
 }
 
+#ifndef __EMSCRIPTEN__
 static void watch_callback(dmon_watch_id watch_id, dmon_action action,
                            const char *rootdir, const char *filepath,
                            const char *oldfilepath, void *user) {
@@ -142,7 +148,7 @@ static void watch_callback(dmon_watch_id watch_id, dmon_action action,
         break;
     }
 
-    char init_path[256];
+    char init_path[PATH_MAX];
     snprintf(init_path, sizeof(init_path), "%sinit.lua", rootdir);
 
     struct ZIterator *hook_iterator;
@@ -160,14 +166,17 @@ static void watch_callback(dmon_watch_id watch_id, dmon_action action,
 
     bool result = Engine_RunLuaScript(cur_engine, init_path);
 }
+#endif
 
 bool LoadMod(Engine_t *engine, const char *mod_dir, const char *mod_name) {
-    char init_path[256];
+    char init_path[PATH_MAX];
     snprintf(init_path, sizeof(init_path), "%s/init.lua", mod_dir);
+#ifndef __EMSCRIPTEN__
     if (!_dmon_init) {
         dmon_init();
     }
     dmon_watch(mod_dir, watch_callback, DMON_WATCHFLAGS_RECURSIVE, NULL);
+#endif
     bool result = Engine_RunLuaScript(engine, init_path);
     if (result) {
         zhash_set(engine->loaded_mods, (char *)mod_name, (void *)true);
@@ -177,7 +186,7 @@ bool LoadMod(Engine_t *engine, const char *mod_dir, const char *mod_name) {
 
 bool LoadModsRecurse(Engine_t *engine, const char *mods_dir,
                      const char *mod_name) {
-    char manifest_path[256];
+    char manifest_path[PATH_MAX];
     snprintf(manifest_path, sizeof(manifest_path), "%s/%s/manifest.json",
              mods_dir, mod_name);
 
@@ -216,7 +225,7 @@ bool LoadModsRecurse(Engine_t *engine, const char *mods_dir,
         }
     }
 
-    char mod_dir[256];
+    char mod_dir[PATH_MAX];
     snprintf(mod_dir, sizeof(manifest_path), "%s/%s", mods_dir, mod_name);
 
     return LoadMod(engine, mod_dir, mod_name);
@@ -260,7 +269,9 @@ void Engine_CloseLua(Engine_t *engine) {
     }
     zfree_sorted_hash_table(cur_engine->hooks);
 
+#ifndef __EMSCRIPTEN__
     dmon_deinit();
+#endif
 
     lua_close(engine->L);
 }

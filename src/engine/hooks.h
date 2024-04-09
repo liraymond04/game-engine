@@ -7,14 +7,14 @@
 #include <ctype.h>
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-#if defined(_WIN32)           
-	#define NOGDI             // All GDI defines and routines
-	#define NOUSER            // All USER defines and routines
+#if defined(_WIN32)
+#define NOGDI  // All GDI defines and routines
+#define NOUSER // All USER defines and routines
 #endif
-#include "windows-dirent.h"
-#if defined(_WIN32)           // raylib uses these names as function parameters
-	#undef near
-	#undef far
+#include "windows/dirent.h"
+#if defined(_WIN32) // raylib uses these names as function parameters
+#undef near
+#undef far
 #endif
 #else
 #include <dirent.h>
@@ -24,7 +24,7 @@
 #include <lualib.h>
 #include <lauxlib.h>
 #include <json-c/json.h>
-#include "zhash-c/zsorted_hash.h"
+#include "containers/zhash-c/zsorted_hash.h"
 
 typedef struct Engine Engine_t;
 

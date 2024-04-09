@@ -1,7 +1,6 @@
 #include "engine.h"
-#include "core.h"
-#include "hooks.h"
-#include "scene.h"
+
+#include "containers/vec.h"
 
 #define RAYLIB_NUKLEAR_IMPLEMENTATION
 #include "raylib-nuklear.h"
@@ -11,7 +10,7 @@ bool show_fps = true;
 void UpdateDrawFrame(void *arg);
 
 void Engine_Init(Engine_t *engine, int canvasWidth, int canvasHeight, int scale,
-                 const char *window_name, const char *init_scene_path) {
+                 const char *window_name) {
     engine->canvasWidth = canvasWidth;
     engine->canvasHeight = canvasHeight;
     engine->scale = scale;
@@ -33,29 +32,41 @@ void Engine_Init(Engine_t *engine, int canvasWidth, int canvasHeight, int scale,
         LoadRenderTexture(engine->canvasWidth, engine->canvasHeight);
     //--------------------------------------------------------------------------------------
 
+    // Resource groups
+    for (int i = 0; i < RESOURCE_GROUP_MAX; i++) { // Initialize pointers to null
+        engine->resource_groups[i] = NULL;
+    }
+    Engine_ResourceGroup_Init(engine, 0); // initialize default group
+
+    // Event system
+    event_system_init(engine);
+
+    // Nuklear
     int fontSize = 10;
     engine->nk_ctx = InitNuklear(fontSize);
 
+    // Current scene
     engine->current_scene = NULL;
 
+    // Hooks
     Engine_InitHooks(engine);
 
+    // Keycode enums
     engine->key_enums = zcreate_hash_table();
 
+    // Lua
     Engine_InitLua(engine);
 
+    // Mods
     engine->loaded_mods = zcreate_hash_table();
     Engine_LoadMods(engine);
 
     Engine_RunHook(engine, "HOOK_ENGINE_INIT");
-
-    Engine_Scene_Load(engine, init_scene_path);
-    engine->current_scene->interface.Init(engine);
 }
 
 void Engine_Run(Engine_t *engine) {
-#if defined(PLATFORM_WEB)
-    emscripten_set_main_loop(UpdateDrawFrame, engine, 0, 1);
+#if defined(__EMSCRIPTEN__)
+    emscripten_set_main_loop_arg(UpdateDrawFrame, engine, 0, 1);
 #else
     UpdateDrawFrame(engine);
 #endif
@@ -125,9 +136,11 @@ void Engine_Cleanup(Engine_t *engine) {
     if (current_scene != NULL) {
         current_scene->interface.Cleanup(engine);
 
+#ifndef __EMSCRIPTEN__
         if (current_scene->library_handle) {
             platform_free_library(current_scene->library_handle);
         }
+#endif
 
         free(current_scene);
         engine->current_scene = NULL;
@@ -135,12 +148,35 @@ void Engine_Cleanup(Engine_t *engine) {
 
     Engine_RunHook(engine, "HOOK_ENGINE_CLEANUP");
 
+    // Lua
     Engine_CloseLua(engine);
 
+    // Mods
     zfree_hash_table(engine->loaded_mods);
+
+    // Keycode enums
     zfree_hash_table(engine->key_enums);
 
+    // Nuklear
     UnloadNuklear(engine->nk_ctx);
+
+    // Event system
+    event_system_free();
+
+    // Resources
+    { // Free default group manually
+        Engine_ResourceGroup_Clear(engine, 0);
+        vec_deinit(engine->resource_groups[0]);
+        free(engine->resource_groups[0]);
+    }
+    for (int i = 1; i < RESOURCE_GROUP_MAX; i++) { // Free other groups
+        if (engine->resource_groups[i] != NULL) {
+            Engine_ResourceGroup_Free(engine, i);
+        }
+    }
+    if (engine->rres_info != NULL) {
+        json_object_put(engine->rres_info);
+    }
 
     CloseWindow();
 }

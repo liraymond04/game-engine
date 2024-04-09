@@ -3,6 +3,7 @@
 
 #include "platform_linux.h"
 #include "platform_windows.h"
+#include "platform_web.h"
 
 void *platform_load_library(const char *path);
 void *platform_library_func(void *handle, const char *func);

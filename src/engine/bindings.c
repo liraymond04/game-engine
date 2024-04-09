@@ -2,21 +2,68 @@
 #include "bindings.h"
 #include <string.h>
 
+#define LUA_REGISTER_FUNCTION(L, func)                                         \
+    lua_pushcfunction((L), (_##func));                                         \
+    lua_setglobal((L), #func)
+
 static Engine_t *engine_context;
 
 void map_keys();
+void map_enums(lua_State *L);
+
+static Texture2D luaL_checktexture2d(lua_State *L, int arg);
+static Rectangle luaL_checkrectangle(lua_State *L, int arg);
+static Vector2 luaL_checkvector2(lua_State *L, int arg);
+static Color luaL_checkcolor(lua_State *L, int arg);
+static struct nk_rect luaL_checknkrect(lua_State *L, int arg);
+static struct nk_vec2 luaL_checkvec2(lua_State *L, int arg);
 
 void Engine_BindCFunctions(Engine_t *engine) {
     engine_context = engine;
 
     map_keys();
+    map_enums(engine->L);
 
-    lua_pushcfunction(engine->L, _IsKeyDown);
-    lua_setglobal(engine->L, "IsKeyDown");
-    lua_pushcfunction(engine->L, _DrawRectangle);
-    lua_setglobal(engine->L, "DrawRectangle");
-    lua_pushcfunction(engine->L, _Engine_Scene_Switch);
-    lua_setglobal(engine->L, "Engine_Scene_Switch");
+    /* Raylib */
+    LUA_REGISTER_FUNCTION(engine->L, IsKeyDown);
+    LUA_REGISTER_FUNCTION(engine->L, IsKeyUp);
+    LUA_REGISTER_FUNCTION(engine->L, IsKeyPressed);
+    LUA_REGISTER_FUNCTION(engine->L, IsKeyReleased);
+    LUA_REGISTER_FUNCTION(engine->L, IsKeyPressedRepeat);
+    LUA_REGISTER_FUNCTION(engine->L, DrawTexture);
+    LUA_REGISTER_FUNCTION(engine->L, DrawTexturePro);
+    LUA_REGISTER_FUNCTION(engine->L, DrawText);
+    LUA_REGISTER_FUNCTION(engine->L, DrawLine);
+    LUA_REGISTER_FUNCTION(engine->L, DrawRectangle);
+    LUA_REGISTER_FUNCTION(engine->L, DrawCircle);
+    LUA_REGISTER_FUNCTION(engine->L, UnloadTexture);
+
+    /* Nuklear */
+    LUA_REGISTER_FUNCTION(engine->L, nk_begin);
+    LUA_REGISTER_FUNCTION(engine->L, nk_end);
+    LUA_REGISTER_FUNCTION(engine->L, nk_layout_row_static);
+    LUA_REGISTER_FUNCTION(engine->L, nk_layout_row_dynamic);
+    LUA_REGISTER_FUNCTION(engine->L, nk_button_label);
+    LUA_REGISTER_FUNCTION(engine->L, nk_option_label);
+    LUA_REGISTER_FUNCTION(engine->L, nk_property_int);
+    LUA_REGISTER_FUNCTION(engine->L, nk_label);
+    LUA_REGISTER_FUNCTION(engine->L, nk_widget_width);
+    LUA_REGISTER_FUNCTION(engine->L, nk_combo_begin_color);
+    LUA_REGISTER_FUNCTION(engine->L, nk_combo_end);
+    LUA_REGISTER_FUNCTION(engine->L, nk_color_picker);
+    LUA_REGISTER_FUNCTION(engine->L, nk_propertyf);
+
+    /* Engine */
+    LUA_REGISTER_FUNCTION(engine->L, Engine_ResourceGroup_Init);
+    LUA_REGISTER_FUNCTION(engine->L, Engine_ResourceGroup_Free);
+    LUA_REGISTER_FUNCTION(engine->L, Engine_ResourceGroup_Clear);
+    LUA_REGISTER_FUNCTION(engine->L, Engine_Scene_Switch);
+    LUA_REGISTER_FUNCTION(engine->L, Engine_Mod_Scene_Switch);
+    LUA_REGISTER_FUNCTION(engine->L, Engine_LoadResource);
+    LUA_REGISTER_FUNCTION(engine->L, Engine_LoadTexture2D);
+    LUA_REGISTER_FUNCTION(engine->L, event_register);
+    LUA_REGISTER_FUNCTION(engine->L, event_unregister);
+    LUA_REGISTER_FUNCTION(engine->L, event_fire);
 }
 
 int _IsKeyDown(lua_State *L) {
@@ -29,22 +76,284 @@ int _IsKeyDown(lua_State *L) {
     return 1;
 }
 
+int _IsKeyUp(lua_State *L) {
+    const char *key = luaL_checkstring(L, 1);
+
+    int ret =
+        IsKeyUp((int)(size_t)zhash_get(engine_context->key_enums, (char *)key));
+    lua_pushboolean(L, ret);
+
+    return 1;
+}
+
+int _IsKeyPressed(lua_State *L) {
+    const char *key = luaL_checkstring(L, 1);
+
+    int ret = IsKeyPressed(
+        (int)(size_t)zhash_get(engine_context->key_enums, (char *)key));
+    lua_pushboolean(L, ret);
+
+    return 1;
+}
+
+int _IsKeyReleased(lua_State *L) {
+    const char *key = luaL_checkstring(L, 1);
+
+    int ret = IsKeyReleased(
+        (int)(size_t)zhash_get(engine_context->key_enums, (char *)key));
+    lua_pushboolean(L, ret);
+
+    return 1;
+}
+
+int _IsKeyPressedRepeat(lua_State *L) {
+    const char *key = luaL_checkstring(L, 1);
+
+    int ret = IsKeyPressedRepeat(
+        (int)(size_t)zhash_get(engine_context->key_enums, (char *)key));
+    lua_pushboolean(L, ret);
+
+    return 1;
+}
+
+int _DrawText(lua_State *L) {
+    const char *text = luaL_checkstring(L, 1);
+    int posX = luaL_checkinteger(L, 2);
+    int posY = luaL_checkinteger(L, 3);
+    int fontSize = luaL_checkinteger(L, 4);
+    Color color = luaL_checkcolor(L, 5);
+
+    DrawText(text, posX, posY, fontSize, color);
+
+    return 0;
+}
+
+int _DrawTexture(lua_State *L) {
+    Texture2D texture = luaL_checktexture2d(L, 1);
+    int posX = luaL_checkinteger(L, 2);
+    int posY = luaL_checkinteger(L, 3);
+    Color tint = luaL_checkcolor(L, 4);
+
+    DrawTexture(texture, posX, posY, tint);
+
+    return 0;
+}
+
+int _DrawTexturePro(lua_State *L) {
+    Texture2D texture = luaL_checktexture2d(L, 1);
+    Rectangle source = luaL_checkrectangle(L, 2);
+    Rectangle dest = luaL_checkrectangle(L, 3);
+    Vector2 origin = luaL_checkvector2(L, 4);
+    float rotation = luaL_checknumber(L, 5);
+    Color tint = luaL_checkcolor(L, 6);
+
+    DrawTexturePro(texture, source, dest, origin, rotation, tint);
+
+    return 0;
+}
+
+int _DrawLine(lua_State *L) {
+    int startPosX = luaL_checkinteger(L, 1);
+    int startPosY = luaL_checkinteger(L, 2);
+    int endPosX = luaL_checkinteger(L, 3);
+    int endPosY = luaL_checkinteger(L, 4);
+    Color color = luaL_checkcolor(L, 5);
+
+    DrawLine(startPosX, startPosY, endPosX, endPosY, color);
+
+    return 0;
+}
+
 int _DrawRectangle(lua_State *L) {
     int posX = luaL_checkinteger(L, 1);
     int posY = luaL_checkinteger(L, 2);
     int width = luaL_checkinteger(L, 3);
     int height = luaL_checkinteger(L, 4);
-
-    luaL_checktype(L, 5, LUA_TTABLE);
-    lua_getfield(L, 5, "r");
-    lua_getfield(L, 5, "g");
-    lua_getfield(L, 5, "b");
-    lua_getfield(L, 5, "a");
-
-    Color color = { luaL_checkinteger(L, -4), luaL_checkinteger(L, -3),
-                    luaL_checkinteger(L, -2), luaL_checkinteger(L, -1) };
+    Color color = luaL_checkcolor(L, 5);
 
     DrawRectangle(posX, posY, width, height, color);
+
+    return 0;
+}
+
+int _DrawCircle(lua_State *L) {
+    int centerX = luaL_checkinteger(L, 1);
+    int centerY = luaL_checkinteger(L, 2);
+    int radius = luaL_checkinteger(L, 3);
+    Color color = luaL_checkcolor(L, 4);
+
+    DrawCircle(centerX, centerY, radius, color);
+
+    return 0;
+}
+
+int _UnloadTexture(lua_State *L) {
+    Texture2D texture = luaL_checktexture2d(L, 1);
+
+    UnloadTexture(texture);
+
+    return 0;
+}
+
+int _nk_begin(lua_State *L) {
+    const char *title = luaL_checkstring(L, 1);
+    struct nk_rect bounds = luaL_checknkrect(L, 2);
+    int flags = luaL_checkinteger(L, 3);
+
+    int ret = nk_begin(engine_context->nk_ctx, title, bounds, flags);
+    lua_pushboolean(L, ret);
+
+    return 1;
+}
+
+int _nk_end(lua_State *L) {
+    nk_end(engine_context->nk_ctx);
+
+    return 0;
+}
+
+int _nk_layout_row_static(lua_State *L) {
+    int height = luaL_checkinteger(L, 1);
+    int item_width = luaL_checkinteger(L, 2);
+    int cols = luaL_checkinteger(L, 3);
+
+    nk_layout_row_static(engine_context->nk_ctx, height, item_width, cols);
+
+    return 0;
+}
+
+int _nk_layout_row_dynamic(lua_State *L) {
+    int height = luaL_checkinteger(L, 1);
+    int cols = luaL_checkinteger(L, 2);
+
+    nk_layout_row_dynamic(engine_context->nk_ctx, height, cols);
+
+    return 0;
+}
+
+int _nk_button_label(lua_State *L) {
+    const char *title = luaL_checkstring(L, 1);
+
+    int ret = nk_button_label(engine_context->nk_ctx, title);
+    lua_pushboolean(L, ret);
+
+    return 1;
+}
+
+int _nk_option_label(lua_State *L) {
+    const char *title = luaL_checkstring(L, 1);
+    int active = lua_toboolean(L, 2);
+
+    int ret = nk_option_label(engine_context->nk_ctx, title, active);
+    lua_pushboolean(L, ret);
+
+    return 1;
+}
+
+int _nk_property_int(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+    int min = luaL_checkinteger(L, 2);
+    int val = luaL_checkinteger(L, 3);
+    int max = luaL_checkinteger(L, 4);
+    int step = luaL_checkinteger(L, 5);
+    int inc_per_pixel = luaL_checkinteger(L, 6);
+
+    int *ret = &val;
+    nk_property_int(engine_context->nk_ctx, name, min, ret, max, step,
+                    inc_per_pixel);
+    lua_pushinteger(L, *ret);
+
+    return 1;
+}
+
+int _nk_label(lua_State *L) {
+    const char *title = luaL_checkstring(L, 1);
+    int align = luaL_checkinteger(L, 2);
+
+    nk_label(engine_context->nk_ctx, title, align);
+
+    return 0;
+}
+
+int _nk_widget_width(lua_State *L) {
+    float ret = nk_widget_width(engine_context->nk_ctx);
+    lua_pushnumber(L, ret);
+
+    return 1;
+}
+
+int _nk_combo_begin_color(lua_State *L) {
+    Color raylib_color = luaL_checkcolor(L, 1);
+    struct nk_vec2 size = luaL_checkvec2(L, 2);
+
+    int ret = nk_combo_begin_color(engine_context->nk_ctx,
+                                   ColorToNuklear(raylib_color), size);
+    lua_pushboolean(L, ret);
+
+    return 1;
+}
+
+int _nk_combo_end(lua_State *L) {
+    nk_combo_end(engine_context->nk_ctx);
+
+    return 0;
+}
+
+int _nk_color_picker(lua_State *L) {
+    Color raylib_color = luaL_checkcolor(L, 1);
+    int colorformat = luaL_checkinteger(L, 2);
+
+    struct nk_colorf color = nk_color_picker(
+        engine_context->nk_ctx, ColorToNuklearF(raylib_color), colorformat);
+
+    raylib_color = ColorFromNuklearF(color);
+
+    // Create a Lua script string to create a Color object
+    const char *script = "return Color.new(%d, %d, %d, %d)";
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer), script, raylib_color.r, raylib_color.g,
+             raylib_color.b, raylib_color.a);
+
+    luaL_dostring(L, buffer);
+
+    return 1;
+}
+
+int _nk_propertyf(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+    float min = luaL_checknumber(L, 2);
+    float val = luaL_checknumber(L, 3);
+    float max = luaL_checknumber(L, 4);
+    float step = luaL_checknumber(L, 5);
+    float inc_per_pixel = luaL_checknumber(L, 6);
+
+    float ret = nk_propertyf(engine_context->nk_ctx, name, min, val, max, step,
+                             inc_per_pixel);
+    lua_pushnumber(L, ret);
+
+    return 1;
+}
+
+int _Engine_ResourceGroup_Init(lua_State *L) {
+    int group = luaL_checkinteger(L, 1);
+
+    Engine_ResourceGroup_Init(engine_context, group);
+
+    return 0;
+}
+
+int _Engine_ResourceGroup_Free(lua_State *L) {
+    int group = luaL_checkinteger(L, 1);
+
+    Engine_ResourceGroup_Free(engine_context, group);
+
+    return 0;
+}
+
+int _Engine_ResourceGroup_Clear(lua_State *L) {
+    int group = luaL_checkinteger(L, 1);
+
+    Engine_ResourceGroup_Clear(engine_context, group);
 
     return 0;
 }
@@ -55,6 +364,186 @@ int _Engine_Scene_Switch(lua_State *L) {
     Engine_Scene_Switch(engine_context, path);
 
     return 0;
+}
+
+int _Engine_Mod_Scene_Switch(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+
+    Engine_Mod_Scene_Switch(engine_context, name);
+
+    return 0;
+}
+
+int _Engine_LoadResource(lua_State *L) {
+    void *out;
+    const char *resource_path = luaL_checkstring(L, 1);
+    int group = luaL_checkinteger(L, 2);
+
+    int type;
+    int ret =
+        Engine_LoadResource(engine_context, resource_path, group, &out, &type);
+
+    if (ret) {
+        switch (type) {
+        case FILETYPE_TEXT: {
+            char *str = (char *)out;
+            lua_pushstring(L, str);
+        } break;
+        case FILETYPE_IMGE: {
+            Texture2D texture = *(Texture2D *)out;
+
+            // Create a Lua script string to create a Texture2D object
+            const char *script = "return Texture2D.new(%d, %d, %d, %d, %d)";
+            char buffer[256];
+            snprintf(buffer, sizeof(buffer), script, texture.id, texture.width,
+                     texture.height, texture.mipmaps, texture.format);
+
+            luaL_dostring(L, buffer);
+        } break;
+        case FILETYPE_WAVE:
+            break;
+        default:
+            lua_pushboolean(L, 0);
+            break;
+        }
+    } else {
+        lua_pushboolean(L, ret);
+    }
+
+    return 1;
+}
+
+int _Engine_LoadTexture2D(lua_State *L) {
+    Texture2D texture;
+    int id = luaL_checkinteger(L, 1);
+
+    int ret = Engine_LoadTexture2D(engine_context, id, &texture);
+
+    // Create a Lua script string to create a Texture2D object
+    const char *script = "return Texture2D.new(%d, %d, %d, %d, %d)";
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer), script, texture.id, texture.width,
+             texture.height, texture.mipmaps, texture.format);
+
+    luaL_dostring(L, buffer);
+
+    return 1;
+}
+
+int _event_register(lua_State *L) {
+    const char *type = luaL_checkstring(L, 1);
+    const char *listener = luaL_checkstring(L, 2);
+
+    luaL_checktype(L, 3, LUA_TFUNCTION);
+    int gLuaFunctionRef = luaL_ref(L, LUA_REGISTRYINDEX);
+
+    int ret = event_register(type, (void *)listener, NULL, gLuaFunctionRef);
+    lua_pushboolean(L, ret);
+
+    return 1;
+}
+
+int _event_unregister(lua_State *L) {
+    const char *type = luaL_checkstring(L, 1);
+    const char *listener = luaL_checkstring(L, 2);
+
+    luaL_checktype(L, 3, LUA_TFUNCTION);
+    int gLuaFunctionRef = luaL_ref(L, LUA_REGISTRYINDEX);
+
+    int ret = event_unregister(type, (void *)listener, NULL, gLuaFunctionRef);
+    lua_pushboolean(L, ret);
+
+    return 1;
+}
+
+int _event_fire(lua_State *L) {
+    const char *type = luaL_checkstring(L, 1);
+    const char *sender = luaL_checkstring(L, 2);
+
+    // TODO
+    // add arguments for the event_context
+    // struct and the void pointer context
+    event_context_t event_context;
+    int ret = event_fire(type, (void *)sender, event_context, NULL);
+    lua_pushboolean(L, ret);
+
+    return 1;
+}
+
+static Texture2D luaL_checktexture2d(lua_State *L, int arg) {
+    luaL_checktype(L, arg, LUA_TTABLE);
+    lua_getfield(L, arg, "id");
+    lua_getfield(L, arg, "width");
+    lua_getfield(L, arg, "height");
+    lua_getfield(L, arg, "mipmaps");
+    lua_getfield(L, arg, "format");
+
+    Texture2D texture = { luaL_checkinteger(L, -5), luaL_checkinteger(L, -4),
+                          luaL_checkinteger(L, -3), luaL_checkinteger(L, -2),
+                          luaL_checkinteger(L, -1) };
+
+    return texture;
+}
+
+static Rectangle luaL_checkrectangle(lua_State *L, int arg) {
+    luaL_checktype(L, arg, LUA_TTABLE);
+    lua_getfield(L, arg, "x");
+    lua_getfield(L, arg, "y");
+    lua_getfield(L, arg, "width");
+    lua_getfield(L, arg, "height");
+
+    Rectangle rectangle = { luaL_checkinteger(L, -4), luaL_checkinteger(L, -3),
+                            luaL_checkinteger(L, -2),
+                            luaL_checkinteger(L, -1) };
+
+    return rectangle;
+}
+
+static Vector2 luaL_checkvector2(lua_State *L, int arg) {
+    luaL_checktype(L, arg, LUA_TTABLE);
+    lua_getfield(L, arg, "x");
+    lua_getfield(L, arg, "y");
+
+    Vector2 vector = { luaL_checkinteger(L, -2), luaL_checkinteger(L, -1) };
+
+    return vector;
+}
+
+static Color luaL_checkcolor(lua_State *L, int arg) {
+    luaL_checktype(L, arg, LUA_TTABLE);
+    lua_getfield(L, arg, "r");
+    lua_getfield(L, arg, "g");
+    lua_getfield(L, arg, "b");
+    lua_getfield(L, arg, "a");
+
+    Color color = { luaL_checkinteger(L, -4), luaL_checkinteger(L, -3),
+                    luaL_checkinteger(L, -2), luaL_checkinteger(L, -1) };
+
+    return color;
+}
+
+static struct nk_rect luaL_checknkrect(lua_State *L, int arg) {
+    luaL_checktype(L, arg, LUA_TTABLE);
+    lua_getfield(L, arg, "x");
+    lua_getfield(L, arg, "y");
+    lua_getfield(L, arg, "w");
+    lua_getfield(L, arg, "h");
+
+    struct nk_rect rect = { luaL_checkinteger(L, -4), luaL_checkinteger(L, -3),
+                            luaL_checkinteger(L, -2),
+                            luaL_checkinteger(L, -1) };
+
+    return rect;
+}
+
+static struct nk_vec2 luaL_checkvec2(lua_State *L, int arg) {
+    luaL_checktype(L, arg, LUA_TTABLE);
+    lua_getfield(L, arg, "x");
+    lua_getfield(L, arg, "y");
+
+    struct nk_vec2 vec = { luaL_checkinteger(L, -2), luaL_checkinteger(L, -1) };
+
+    return vec;
 }
 
 void map_keys() {
@@ -95,7 +584,8 @@ void map_keys() {
         char key_string[256];
         strcpy(key_string, key_prefix);
         strcat(key_string, tmp);
-        zhash_set(engine_context->key_enums, (char *)key_string, (void *)(size_t)(i));
+        zhash_set(engine_context->key_enums, (char *)key_string,
+                  (void *)(size_t)(i));
     }
 
     // keys
@@ -201,4 +691,35 @@ void map_keys() {
               (void *)(size_t)KEY_VOLUME_UP);
     zhash_set(engine_context->key_enums, "KEY_VOLUME_DOWN",
               (void *)(size_t)KEY_VOLUME_DOWN);
+}
+
+void map_enums(lua_State *L) {
+    lua_newtable(L);
+
+    lua_pushinteger(L, NK_WINDOW_BORDER);
+    lua_setfield(L, -2, "WINDOW_BORDER");
+    lua_pushinteger(L, NK_WINDOW_MOVABLE);
+    lua_setfield(L, -2, "WINDOW_MOVABLE");
+    lua_pushinteger(L, NK_WINDOW_SCALABLE);
+    lua_setfield(L, -2, "WINDOW_SCALABLE");
+    lua_pushinteger(L, NK_WINDOW_CLOSABLE);
+    lua_setfield(L, -2, "WINDOW_CLOSABLE");
+    lua_pushinteger(L, NK_WINDOW_CLOSABLE);
+    lua_setfield(L, -2, "WINDOW_CLOSABLE");
+    lua_pushinteger(L, NK_WINDOW_MINIMIZABLE);
+    lua_setfield(L, -2, "WINDOW_MINIMIZABLE");
+    lua_pushinteger(L, NK_WINDOW_NO_SCROLLBAR);
+    lua_setfield(L, -2, "WINDOW_NO_SCROLLBAR");
+    lua_pushinteger(L, NK_WINDOW_TITLE);
+    lua_setfield(L, -2, "WINDOW_TITLE");
+    lua_pushinteger(L, NK_WINDOW_SCROLL_AUTO_HIDE);
+    lua_setfield(L, -2, "WINDOW_SCROLL_AUTO_HIDE");
+    lua_pushinteger(L, NK_WINDOW_BACKGROUND);
+    lua_setfield(L, -2, "WINDOW_BACKGROUND");
+    lua_pushinteger(L, NK_WINDOW_SCALE_LEFT);
+    lua_setfield(L, -2, "WINDOW_SCALE_LEFT");
+    lua_pushinteger(L, NK_WINDOW_NO_INPUT);
+    lua_setfield(L, -2, "WINDOW_NO_INPUT");
+
+    lua_setglobal(L, "NK");
 }
