@@ -1,6 +1,18 @@
+local cwd = function()
+  local info = debug.getinfo(1, "S")
+  if info and info.source then
+    local path = info.source:gsub("^[@=]", "")
+    return path:match("^(.*[\\/])")
+  end
+  return nil
+end
+
 local player_speed = 4.0
 
 local bg = Color.new(255, 41, 55, 255)
+
+local player = Animator.load("animators/player", cwd)
+print(player.anims["walk"].total_frames)
 
 RegisterFunction("HOOK_MAIN_MENU_INIT", function()
   print("(Core Mod): Main menu init!")
@@ -9,6 +21,7 @@ RegisterFunction("HOOK_MAIN_MENU_INIT", function()
   player_y = 20
 
   player_texture = Engine_LoadResource("assets/bloofus.png", 0)
+
   test = Engine_LoadResource("assets/test/one.txt", 0)
   print(test)
 
@@ -55,7 +68,7 @@ end)
 RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
   if player_texture and type(player_texture) == "table" and getmetatable(player_texture) == Texture2D then
     -- DrawTexture(player_texture, 25, 25, Color.new(255, 255, 255, 255))
-    DrawTexturePro(player_texture, Rectangle.new(0, 0, 32, 32), Rectangle.new(30, 30, 50, 50), Vector2.zero, 0,
+    DrawTexturePro(player.resources[1], Rectangle.new(0, 0, 32, 32), Rectangle.new(30, 30, 50, 50), Vector2.zero, 0,
       Color.WHITE)
   end
 

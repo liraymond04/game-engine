@@ -1,4 +1,5 @@
--- Helper function definitions
+local player_animator = Animator.new("Player")
+
 local cwd = function()
   local info = debug.getinfo(1, "S")
   if info and info.source then
@@ -7,13 +8,10 @@ local cwd = function()
   end
   return nil
 end
-  
-local include = function(path)
-  dofile(cwd() .. path .. ".lua")
+
+Animator.Init = function(self)
+  self:LoadResource("assets/bloofus.png")
+  self:LoadAnim("walk", cwd)
 end
 
--- Includes
-include("game-engine")
-include("raylib")
-include("nuklear")
-include("animation")
+return player_animator
