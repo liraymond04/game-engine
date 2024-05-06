@@ -74,6 +74,8 @@ RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
 
   DrawRectangle(player_x, player_y, 20, 20, bg)
 
+  player:Tick()
+
   if nk_begin("Main menu", nk_rect.new(50, 50, 230, 250), NK.WINDOW_BORDER | NK.WINDOW_MOVABLE | NK.WINDOW_SCALABLE | NK.WINDOW_MINIMIZABLE | NK.WINDOW_TITLE) then
     EASY = 0
     HARD = 1

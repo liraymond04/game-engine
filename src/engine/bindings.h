@@ -10,6 +10,7 @@ typedef struct Engine Engine_t;
 void Engine_BindCFunctions(Engine_t *engine);
 
 /* Raylib */
+int _GetFrameTime(lua_State *L);
 int _IsKeyDown(lua_State *L);
 int _IsKeyUp(lua_State *L);
 int _IsKeyPressed(lua_State *L);

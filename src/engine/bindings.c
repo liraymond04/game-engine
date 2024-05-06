@@ -25,6 +25,7 @@ void Engine_BindCFunctions(Engine_t *engine) {
     map_enums(engine->L);
 
     /* Raylib */
+    LUA_REGISTER_FUNCTION(engine->L, GetFrameTime);
     LUA_REGISTER_FUNCTION(engine->L, IsKeyDown);
     LUA_REGISTER_FUNCTION(engine->L, IsKeyUp);
     LUA_REGISTER_FUNCTION(engine->L, IsKeyPressed);
@@ -64,6 +65,13 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, event_register);
     LUA_REGISTER_FUNCTION(engine->L, event_unregister);
     LUA_REGISTER_FUNCTION(engine->L, event_fire);
+}
+
+int _GetFrameTime(lua_State *L) {
+    float ret = GetFrameTime();
+    lua_pushnumber(L, ret);
+
+    return 1;
 }
 
 int _IsKeyDown(lua_State *L) {

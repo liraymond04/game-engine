@@ -12,6 +12,8 @@ end
 Animator.Init = function(self)
   self:LoadResource("assets/bloofus.png")
   self:LoadAnim("walk", cwd)
+
+  self.current_state = "walk"
 end
 
 return player_animator

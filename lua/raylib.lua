@@ -140,6 +140,12 @@ Vector2.zero = Vector2.new(0, 0)
 --- Raylib
 --------------------------------------------------------------------------------
 ---
+---Get time in seconds for last frame drawn (delta time)
+---@return number
+---
+function GetFrameTime() end
+
+---
 ---Check if a key is being pressed (key held down).
 ---@param key string The key code to listen for.
 ---@return boolean True if the key is currently down.
