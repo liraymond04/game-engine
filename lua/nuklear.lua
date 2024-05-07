@@ -14,11 +14,13 @@
 nk_rect = {}
 nk_rect.__index = nk_rect
 
+---
 ---Constructor function to create a new nk_rect object
 ---@param x number Rectangle x coordinate
 ---@param y number Rectangle y coordinate
 ---@param w number Rectangle width
 ---@param h number Rectangle height
+---
 function nk_rect.new(x, y, w, h)
     local self = setmetatable({}, nk_rect)
     self.x = x
@@ -37,9 +39,12 @@ end
 nk_vec2 = {}
 nk_vec2.__index = nk_vec2
 
+---
 ---Constructor function to create a new nk_vec2 object
 ---@param x number Vector x coordinate
 ---@param y number Vector y coordinate
+---@return nk_vec2
+---
 function nk_vec2.new(x, y)
     local self = setmetatable({}, nk_vec2)
     self.x = x

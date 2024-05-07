@@ -14,11 +14,14 @@
 Color = {}
 Color.__index = Color
 
+---
 ---Constructor function to create a new Color object
 ---@param red integer The red component of the color (0-255).
 ---@param green integer The green component of the color (0-255).
 ---@param blue integer The blue component of the color (0-255).
 ---@param alpha integer The alpha component of the color (0-255).
+---@return Color
+---
 function Color.new(red, green, blue, alpha)
     local self = setmetatable({}, Color)
     self.r = red or 0
@@ -28,7 +31,10 @@ function Color.new(red, green, blue, alpha)
     return self
 end
 
--- Custom tostring method for Color objects
+---
+---Custom tostring method for Color objects
+---@return string
+---
 function Color:__tostring()
     return string.format("Color(R:%d, G:%d, B:%d, A:%d)", self.r, self.g, self.b, self.a)
 end
@@ -73,12 +79,15 @@ Color.RAYWHITE    = Color.new(245, 245, 245, 255)
 Texture2D         = {}
 Texture2D.__index = Texture2D
 
+---
 ---Constructor function to create a new Texture2D object
 ---@param id integer OpenGL texture id
 ---@param width integer Texture2D base width
 ---@param height integer Texture2D base height
 ---@param mipmaps integer Mipmap levels, 1 by default
 ---@param format integer Data format (PixelFormat type)
+---@return Texture2D
+---
 function Texture2D.new(id, width, height, mipmaps, format)
     local self = setmetatable({}, Texture2D)
     self.id = id or 0
@@ -100,11 +109,14 @@ end
 Rectangle = {}
 Rectangle.__index = Rectangle
 
+---
 ---Constuctor function to create a new Rectangle object
 ---@param x number Rectangle top-left corner position x
 ---@param y number Rectangle top-left corner position y
 ---@param width number Rectangle width
 ---@param height number Rectangle height
+---@return Rectangle
+---
 function Rectangle.new(x, y, width, height)
     local self = setmetatable({}, Rectangle)
     self.x = x
@@ -123,9 +135,12 @@ end
 Vector2 = {}
 Vector2.__index = Vector2
 
+---
 ---Constructor function to create a new Vector2 object
 ---@param x number Vector x component
 ---@param y number Vector y component
+---@return Vector2
+---
 function Vector2.new(x, y)
     local self = setmetatable({}, Vector2)
     self.x = x

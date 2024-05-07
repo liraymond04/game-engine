@@ -3,27 +3,29 @@
 ---
 ---Anim class represents an animation definition with frames and transition conditions
 ---@class Anim
----@field animator Animator
----@field Before function
----@field After function
----@field frame_resources integer[]
----@field total_frames integer
----@field current_frame integer
----@field next_frame integer
----@field frames_per_second integer
----@field frame_functions function[]
----@field timer number
----@field target_frame_time number
+---@field animator Animator Reference to parent animator object
+---@field Before function Function that runs before every frame tick
+---@field After function Function that runs after every frame tick
+---@field frame_resources integer[] Array of animator resource indices used in Anim object
+---@field total_frames integer Total number of frames in animation
+---@field current_frame integer Current frame to be displayed
+---@field next_frame integer Next frame to transition to on frame tick
+---@field frames_per_second integer Rate that animation changes frames
+---@field frame_functions function[] Function definitions of frame behaviour
+---@field timer number Counter for timing animation ticks
+---@field target_frame_time number Target frame time calculated from frames per second
 ---
 Anim = {}
 Anim.__index = Anim
 
+---
 ---Constructor function to create a new Animator object
 ---@param frame_resources integer[] Array of resources used
 ---@param total_frames integer Total number of frames in animation
 ---@param initial_frame integer Initial frame of animation
----@param frames_per_second integer
+---@param frames_per_second integer Rate that animation changes frames
 ---@return Anim
+---
 function Anim.new(frame_resources, total_frames, initial_frame, frames_per_second)
     local self = setmetatable({}, Anim)
     self.frame_resources = frame_resources
@@ -36,6 +38,11 @@ function Anim.new(frame_resources, total_frames, initial_frame, frames_per_secon
     return self
 end
 
+---
+---Function that runs every animation tick, typically the frame rate of the application.
+---The local Anim object timer is accumulated until it reaches the target frame time,
+---where it will be reset and the current frame will be set to the next queued frame.
+---
 function Anim:Tick()
     if self.Before then
         self:Before()
@@ -52,6 +59,9 @@ function Anim:Tick()
     end
 end
 
+---
+---Helper function to set next frame from the current and total frames.
+---
 function Anim:NextFrame()
     self.next_frame = self.current_frame + 1
     if self.next_frame > self.total_frames then
@@ -64,23 +74,25 @@ end
 ---@class Animator
 ---@field name string Name of animation object
 ---@field Init function Initialization function, should load resources like textures and anims
----@field Before function
----@field After function
----@field x number
----@field y number
----@field w number
----@field h number
----@field resources Texture2D[]
----@field anims { [string]: Anim }
----@field current_state string
----@field state { [string]: any }
+---@field Before function Function that runs before every animator tick
+---@field After function Function that runs after every animator tick
+---@field x number X position of animator object
+---@field y number Y position of animator object
+---@field w number Width of animator object
+---@field h number Height of animator object
+---@field resources Texture2D[] Array of texture resources loaded by animator object
+---@field anims { [string]: Anim } Map of references to Anim objects loaded animator object
+---@field current_state string Current Anim state, should match a loaded Anim
+---@field state { [string]: any } Map of custom state variables for use in programmatic behaviour
 ---
 Animator = {}
 Animator.__index = Animator
 
+---
 ---Constructor function to create a new Animator object
 ---@param name string Name of animator object
 ---@return Animator
+---
 function Animator.new(name)
     local self = setmetatable({}, Animator)
     self.name = name
@@ -95,13 +107,22 @@ function Animator.new(name)
     return self
 end
 
+---
+---Load animator object from a directory
+---@param path string Path to directory with animator definition 
+---@param cwd function Function for getting current working directory of the current file
 ---@return Animator
+---
 function Animator.load(path, cwd)
     local animator = dofile(cwd() .. path .. "/init.lua")
     animator:Init()
     return animator
 end
 
+---
+---Load resource file from a rres resource path (the rres file should be loaded by engine already)
+---@param path string rres resource path
+---
 function Animator:LoadResource(path)
     local latest = #self.resources
     local texture = Engine_LoadResource(path, 0)
@@ -110,11 +131,20 @@ function Animator:LoadResource(path)
     end
 end
 
+---
+---Load Anim object from a directory
+---@param path string Path to directory with Anim definition
+---@param cwd function Function for getting current working directory of the current file
+---
 function Animator:LoadAnim(path, cwd)
     self.anims[path] = dofile(cwd() .. path .. ".lua")
     self.anims[path].animator = self
 end
 
+---
+---Function that runs every animation tick, typically the frame rate of the application.
+---Runs the tick function of the currently active Anim object state.
+---
 function Animator:Tick()
     if self.Before then
         self:Before()
