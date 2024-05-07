@@ -7,7 +7,14 @@
 ---Registers Lua function to an engine hook
 ---@param hook_name string The hook being registered to
 ---@param function_ref function The function being registered
+---
 function RegisterFunction(hook_name, function_ref) end
+
+---
+---Runs hook with string name if it exists and is registered
+---@param hook_name string The name of the hook being run
+---
+function Engine_RunHook(hook_name) end
 
 ---
 ---Initializes resource group
@@ -69,6 +76,7 @@ function Engine_LoadTexture2D(id) end
 ---
 function event_register(type, listener, on_event) end
 
+---
 ---Unregister from listening for when events are sent with the provided code. If no matching
 ---registration is found, this function returns false.
 ---again and will cause this to return false.

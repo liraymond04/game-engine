@@ -55,6 +55,7 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, nk_propertyf);
 
     /* Engine */
+    LUA_REGISTER_FUNCTION(engine->L, Engine_RunHook);
     LUA_REGISTER_FUNCTION(engine->L, Engine_ResourceGroup_Init);
     LUA_REGISTER_FUNCTION(engine->L, Engine_ResourceGroup_Free);
     LUA_REGISTER_FUNCTION(engine->L, Engine_ResourceGroup_Clear);
@@ -340,6 +341,14 @@ int _nk_propertyf(lua_State *L) {
     lua_pushnumber(L, ret);
 
     return 1;
+}
+
+int _Engine_RunHook(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+
+    Engine_RunHook(engine_context, name);
+
+    return 0;
 }
 
 int _Engine_ResourceGroup_Init(lua_State *L) {
