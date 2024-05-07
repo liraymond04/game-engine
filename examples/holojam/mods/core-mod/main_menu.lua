@@ -19,11 +19,6 @@ RegisterFunction("HOOK_MAIN_MENU_INIT", function()
 
   PLAYER.x = 20
   PLAYER.y = 20
-  PLAYER.w = 50
-  PLAYER.h = 50
-
-  local test = Engine_LoadResource("assets/test/one.txt", 0)
-  print(test)
 
   event_register("TEST", "main_menu_listener", function()
     print("main_menu TEST event fired")
@@ -63,10 +58,12 @@ RegisterFunction("HOOK_MAIN_MENU_UPDATE", function()
   if IsKeyDown("KEY_A") then
     PLAYER.x = PLAYER.x - player_speed
     PLAYER.state.moving = true
+    PLAYER.state.facing_right = false
   end
   if IsKeyDown("KEY_D") then
     PLAYER.x = PLAYER.x + player_speed
     PLAYER.state.moving = true
+    PLAYER.state.facing_right = true
   end
 end)
 

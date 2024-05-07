@@ -10,12 +10,16 @@ local cwd = function()
 end
 
 player_animator.Init = function(self)
-  self:LoadResource("assets/bloofus.png")
+  self.w = 100
+  self.h = 100
+
+  self:LoadResource("assets/player/char_blue_1.png")
   self:LoadAnim("idle", cwd)
   self:LoadAnim("walk", cwd)
 
   self.current_state = "idle"
   self.state.moving = false
+  self.state.facing_right = true
 end
 
 player_animator.Before = function(self)
