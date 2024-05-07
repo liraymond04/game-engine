@@ -11,18 +11,18 @@ local player_speed = 4.0
 
 local bg = Color.new(255, 41, 55, 255)
 
-local player = Animator.load("animators/player", cwd)
-print(player.anims["walk"].total_frames)
+PLAYER = PLAYER or Animator.load("animators/player", cwd)
+print(PLAYER.anims["walk"].total_frames)
 
 RegisterFunction("HOOK_MAIN_MENU_INIT", function()
   print("(Core Mod): Main menu init!")
 
-  player_x = 20
-  player_y = 20
+  PLAYER.x = 20
+  PLAYER.y = 20
+  PLAYER.w = 50
+  PLAYER.h = 50
 
-  player_texture = Engine_LoadResource("assets/bloofus.png", 0)
-
-  test = Engine_LoadResource("assets/test/one.txt", 0)
+  local test = Engine_LoadResource("assets/test/one.txt", 0)
   print(test)
 
   event_register("TEST", "main_menu_listener", function()
@@ -51,30 +51,29 @@ RegisterFunction("HOOK_MAIN_MENU_PROCESS_INPUT", function()
 end)
 
 RegisterFunction("HOOK_MAIN_MENU_UPDATE", function()
+  PLAYER.state.moving = false
   if IsKeyDown("KEY_W") then
-    player_y = player_y - player_speed
+    PLAYER.y = PLAYER.y - player_speed
+    PLAYER.state.moving = true
   end
   if IsKeyDown("KEY_S") then
-    player_y = player_y + player_speed
+    PLAYER.y = PLAYER.y + player_speed
+    PLAYER.state.moving = true
   end
   if IsKeyDown("KEY_A") then
-    player_x = player_x - player_speed
+    PLAYER.x = PLAYER.x - player_speed
+    PLAYER.state.moving = true
   end
   if IsKeyDown("KEY_D") then
-    player_x = player_x + player_speed
+    PLAYER.x = PLAYER.x + player_speed
+    PLAYER.state.moving = true
   end
 end)
 
 RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
-  if player_texture and type(player_texture) == "table" and getmetatable(player_texture) == Texture2D then
-    -- DrawTexture(player_texture, 25, 25, Color.new(255, 255, 255, 255))
-    DrawTexturePro(player.resources[1], Rectangle.new(0, 0, 32, 32), Rectangle.new(30, 30, 50, 50), Vector2.zero, 0,
-      Color.WHITE)
-  end
+  PLAYER:Tick()
 
-  DrawRectangle(player_x, player_y, 20, 20, bg)
-
-  player:Tick()
+  -- DrawRectangle(player.x, player.y, 20, 20, bg)
 
   if nk_begin("Main menu", nk_rect.new(50, 50, 230, 250), NK.WINDOW_BORDER | NK.WINDOW_MOVABLE | NK.WINDOW_SCALABLE | NK.WINDOW_MINIMIZABLE | NK.WINDOW_TITLE) then
     EASY = 0

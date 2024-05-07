@@ -9,11 +9,21 @@ local cwd = function()
   return nil
 end
 
-Animator.Init = function(self)
+player_animator.Init = function(self)
   self:LoadResource("assets/bloofus.png")
+  self:LoadAnim("idle", cwd)
   self:LoadAnim("walk", cwd)
 
-  self.current_state = "walk"
+  self.current_state = "idle"
+  self.state.moving = false
+end
+
+player_animator.Before = function(self)
+  if self.state.moving == false then
+    self.current_state = "idle"
+  else
+    self.current_state = "walk"
+  end
 end
 
 return player_animator
