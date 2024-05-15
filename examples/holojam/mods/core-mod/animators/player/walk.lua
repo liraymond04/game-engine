@@ -6,7 +6,7 @@ local width = 56
 local height = 56
 
 for i=1,8 do
-    walk_anim.frame_functions[i] = function(self)
+    walk_anim.frame_update[i] = function(self)
         local animator = self.animator
         local res = self.frame_resources[1]
         local texture = animator.resources[res]
@@ -23,6 +23,14 @@ for i=1,8 do
         DrawTexturePro(texture, Rectangle.new(x, y, width * flip, height), dest, Vector2.zero, 0,
           Color.WHITE)
         self:NextFrame()
+    end
+end
+
+for _, i in pairs({2, 6}) do
+    walk_anim.frame_enter[i] = function(self)
+        local animator = self.animator
+        local walk_sound = animator.resources[2]
+        PlaySound(walk_sound)
     end
 end
 

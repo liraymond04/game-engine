@@ -50,6 +50,8 @@ void Engine_ResourceGroup_Clear(Engine_t *engine, int group) {
             free(resource.data);
             break;
         case FILETYPE_WAVE:
+            UnloadSound(*(Sound *)resource.data);
+            free(resource.data);
             break;
         default:
             break;
@@ -122,6 +124,8 @@ int Engine_LoadResource(Engine_t *engine, const char *resource_path, int group,
         ret = Engine_LoadTexture2D(engine, id, *out);
         break;
     case FILETYPE_WAVE:
+        *out = malloc(sizeof(Sound));
+        ret = Engine_LoadSound(engine, id, *out);
         break;
     default:
         break;
@@ -168,6 +172,25 @@ int Engine_LoadTexture2D(Engine_t *engine, int id, Texture2D *out) {
     Image image = LoadImageFromResource(chunk);
     *out = LoadTextureFromImage(image);
     UnloadImage(image);
+
+    return 1;
+}
+
+int Engine_LoadSound(Engine_t *engine, int id, Sound *out) {
+    rresResourceChunk chunk = rresLoadResourceChunk(engine->rres_file, id);
+    int result = UnpackResourceChunk(
+        &chunk); // Decompres/decipher resource data (if required)
+
+    if (result == 0) // Data decompressed/decrypted successfully
+    {
+        Wave wave = LoadWaveFromResource(chunk);
+        *out = LoadSoundFromWave(wave);
+        UnloadWave(wave);
+    } else {
+        return 0;
+    }
+
+    rresUnloadResourceChunk(chunk);
 
     return 1;
 }

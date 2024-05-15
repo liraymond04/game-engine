@@ -38,6 +38,7 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, DrawRectangle);
     LUA_REGISTER_FUNCTION(engine->L, DrawCircle);
     LUA_REGISTER_FUNCTION(engine->L, UnloadTexture);
+    LUA_REGISTER_FUNCTION(engine->L, PlaySound);
 
     /* Nuklear */
     LUA_REGISTER_FUNCTION(engine->L, nk_begin);
@@ -200,6 +201,14 @@ int _UnloadTexture(lua_State *L) {
     Texture2D texture = luaL_checktexture2d(L, 1);
 
     UnloadTexture(texture);
+
+    return 0;
+}
+
+int _PlaySound(lua_State *L) {
+    Sound *sound = (Sound *)lua_touserdata(L, 1);
+
+    PlaySound(*sound);
 
     return 0;
 }
@@ -417,8 +426,10 @@ int _Engine_LoadResource(lua_State *L) {
 
             luaL_dostring(L, buffer);
         } break;
-        case FILETYPE_WAVE:
-            break;
+        case FILETYPE_WAVE: {
+            Sound *sound = (Sound *)out;
+            lua_pushlightuserdata(L, sound);
+        } break;
         default:
             lua_pushboolean(L, 0);
             break;

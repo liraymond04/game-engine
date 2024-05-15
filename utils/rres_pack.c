@@ -46,7 +46,7 @@ const FileTypeEntry file_types[] = {
     { FILETYPE_IMGE, ".jpg", PackIMGE },  //
     { FILETYPE_IMGE, ".jpeg", PackIMGE }, //
     { FILETYPE_TEXT, ".txt", PackTEXT },  //
-    { FILETYPE_TEXT, ".wav", PackWAVE },  //
+    { FILETYPE_WAVE, ".wav", PackWAVE },  //
     // Add more file types as needed
 };
 

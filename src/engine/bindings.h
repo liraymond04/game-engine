@@ -23,6 +23,7 @@ int _DrawLine(lua_State *L);
 int _DrawRectangle(lua_State *L);
 int _DrawCircle(lua_State *L);
 int _UnloadTexture(lua_State *L);
+int _PlaySound(lua_State *L);
 
 /* Nuklear */
 int _nk_begin(lua_State *L);

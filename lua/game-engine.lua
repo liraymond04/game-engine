@@ -54,7 +54,7 @@ function Engine_Mod_Scene_Switch(scene_name) end
 ---Load an asset to resources.
 ---@param resource_path string Path to asset
 ---@param group integer Resource group to load to
----@return string | Texture2D | boolean
+---@return string | Texture2D | Sound | boolean
 ---
 function Engine_LoadResource(resource_path, group) end
 

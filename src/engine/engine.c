@@ -25,6 +25,7 @@ void Engine_Init(Engine_t *engine, int canvasWidth, int canvasHeight, int scale,
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 
     InitWindow(engine->screenWidth, engine->screenHeight, window_name);
+    InitAudioDevice();
 
     SetTargetFPS(60);
 
@@ -178,5 +179,6 @@ void Engine_Cleanup(Engine_t *engine) {
         json_object_put(engine->rres_info);
     }
 
+    CloseAudioDevice();
     CloseWindow();
 }

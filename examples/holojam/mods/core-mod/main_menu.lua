@@ -14,6 +14,9 @@ local bg = Color.new(255, 41, 55, 255)
 PLAYER = PLAYER or Animator.load("animators/player", cwd)
 print(PLAYER.anims["walk"].total_frames)
 
+local test_text = Engine_LoadResource("assets/test.txt", 0)
+print(test_text)
+
 RegisterFunction("HOOK_MAIN_MENU_INIT", function()
   print("(Core Mod): Main menu init!")
 

@@ -261,3 +261,9 @@ function DrawCircle(centerX, centerY, radius, color) end
 ---@param texture Texture2D Texture to unload
 ---
 function UnloadTexture(texture) end
+
+---
+---Play sound from Sound data
+---@param sound Sound Sound to play
+---
+function PlaySound(sound) end

@@ -14,6 +14,7 @@ player_animator.Init = function(self)
   self.h = 100
 
   self:LoadResource("assets/player/char_blue_1.png")
+  self:LoadResource("assets/sounds/coin.wav")
   self:LoadAnim("idle", cwd)
   self:LoadAnim("walk", cwd)
 

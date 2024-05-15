@@ -11,7 +11,10 @@
 ---@field current_frame integer Current frame to be displayed
 ---@field next_frame integer Next frame to transition to on frame tick
 ---@field frames_per_second integer Rate that animation changes frames
----@field frame_functions function[] Function definitions of frame behaviour
+---@field frame_enter function[] Function runs once this frame is entered
+---@field frame_update function[] Function runs every update tick for this frame
+---@field frame_exit function[] Function runs once this frame is exited
+---@field frame_started boolean Keep track of when the current frame has started ticking
 ---@field timer number Counter for timing animation ticks
 ---@field target_frame_time number Target frame time calculated from frames per second
 ---
@@ -32,7 +35,10 @@ function Anim.new(frame_resources, total_frames, initial_frame, frames_per_secon
     self.total_frames = total_frames
     self.current_frame = initial_frame
     self.frames_per_second = frames_per_second
-    self.frame_functions = {}
+    self.frame_enter = {}
+    self.frame_update = {}
+    self.frame_exit = {}
+    self.frame_started = false
     self.timer = 0
     self.target_frame_time = 1.0 / self.frames_per_second
     return self
@@ -47,13 +53,36 @@ function Anim:Tick()
     if self.Before then
         self:Before()
     end
+
     local elapsed_time = GetFrameTime()
     self.timer = self.timer + elapsed_time
-    self.frame_functions[self.current_frame](self)
+
+    -- frame enter
+    if not self.frame_started then
+        local enter = self.frame_enter[self.current_frame]
+        if enter then
+            enter(self)
+        end
+    end
+    self.frame_started = true
+
+    -- frame update
+    local update = self.frame_update[self.current_frame]
+    if update then
+        update(self)
+    end
     if self.timer >= self.target_frame_time then
         self.current_frame = self.next_frame
         self.timer = 0
+
+        -- frame exit
+        local fexit = self.frame_exit[self.current_frame]
+        if fexit then
+            fexit(self)
+        end
+        self.frame_started = false
     end
+
     if self.After then
         self:After()
     end
@@ -80,7 +109,7 @@ end
 ---@field y number Y position of animator object
 ---@field w number Width of animator object
 ---@field h number Height of animator object
----@field resources Texture2D[] Array of texture resources loaded by animator object
+---@field resources (string | Texture2D | Sound)[] Array of resources loaded by animator object
 ---@field anims { [string]: Anim } Map of references to Anim objects loaded animator object
 ---@field current_state string Current Anim state, should match a loaded Anim
 ---@field state { [string]: any } Map of custom state variables for use in programmatic behaviour
@@ -109,7 +138,7 @@ end
 
 ---
 ---Load animator object from a directory
----@param path string Path to directory with animator definition 
+---@param path string Path to directory with animator definition
 ---@param cwd function Function for getting current working directory of the current file
 ---@return Animator
 ---
@@ -125,9 +154,9 @@ end
 ---
 function Animator:LoadResource(path)
     local latest = #self.resources
-    local texture = Engine_LoadResource(path, 0)
-    if texture and type(texture) == "table" and getmetatable(texture) == Texture2D then
-        self.resources[latest + 1] = texture
+    local resource = Engine_LoadResource(path, 0)
+    if type(resource) ~= "boolean" then
+        self.resources[latest + 1] = resource
     end
 end
 
@@ -154,3 +183,6 @@ function Animator:Tick()
         self:After()
     end
 end
+
+---Sound is a pointer to a sound loaded by raylib
+---@alias Sound lightuserdata

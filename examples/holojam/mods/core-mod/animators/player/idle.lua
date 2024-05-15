@@ -6,7 +6,7 @@ local width = 56
 local height = 56
 
 for i=1,6 do
-    idle_anim.frame_functions[i] = function(self)
+    idle_anim.frame_update[i] = function(self)
         local animator = self.animator
         local res = self.frame_resources[1]
         local texture = animator.resources[res]
