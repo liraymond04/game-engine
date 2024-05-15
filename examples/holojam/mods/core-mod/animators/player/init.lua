@@ -25,10 +25,20 @@ end
 
 player_animator.Before = function(self)
   if self.state.moving == false then
-    self.current_state = "idle"
+    self:ChangeState("idle")
   else
-    self.current_state = "walk"
+    self:ChangeState("walk")
   end
+end
+
+player_animator.state_enter["idle"] = function(self)
+  print('enter idle')
+  self.anims["idle"].current_frame = 1
+end
+
+player_animator.state_enter["walk"] = function(self)
+  print('enter walk')
+  self.anims["walk"].current_frame = 1
 end
 
 return player_animator

@@ -113,6 +113,8 @@ end
 ---@field anims { [string]: Anim } Map of references to Anim objects loaded animator object
 ---@field current_state string Current Anim state, should match a loaded Anim
 ---@field state { [string]: any } Map of custom state variables for use in programmatic behaviour
+---@field state_enter { [string]: function } Function that runs when a state is entered
+---@field state_exit { [string]: function } Function that runs when a state is exited
 ---
 Animator = {}
 Animator.__index = Animator
@@ -133,6 +135,8 @@ function Animator.new(name)
     self.anims = {}
     self.current_state = ""
     self.state = {}
+    self.state_enter = {}
+    self.state_exit = {}
     return self
 end
 
@@ -181,6 +185,28 @@ function Animator:Tick()
     self.anims[self.current_state]:Tick()
     if self.After then
         self:After()
+    end
+end
+
+---
+---Changes the current state to the new state if it is different, and runs the proper enter
+---and exit functions if they exist for the old and new states.
+---
+function Animator:ChangeState(new_state)
+    if self.current_state == new_state then
+        return
+    end
+
+    local exit = self.state_exit[self.current_state]
+    if exit then
+        exit(self)
+    end
+
+    self.current_state = new_state
+
+    local enter = self.state_enter[self.current_state]
+    if enter then
+        enter(self)
     end
 end
 
