@@ -43,6 +43,7 @@ int _nk_style_default(lua_State *L);
 int _nk_style_from_table(lua_State *L);
 
 /* Engine */
+int _Engine_SetMasterVolume(lua_State *L);
 int _Engine_GetWidth(lua_State *L);
 int _Engine_GetHeight(lua_State *L);
 int _Engine_RunHook(lua_State *L);
@@ -56,5 +57,10 @@ int _Engine_LoadTexture2D(lua_State *L);
 int _event_register(lua_State *L);
 int _event_unregister(lua_State *L);
 int _event_fire(lua_State *L);
+int _audio_group_get(lua_State *L);
+int _audio_group_add_sound(lua_State *L);
+int _audio_group_remove_sound(lua_State *L);
+int _audio_group_get_volume(lua_State *L);
+int _audio_group_set_volume(lua_State *L);
 
 #endif // !ENGINE_BINDINGS

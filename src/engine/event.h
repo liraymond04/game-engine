@@ -30,7 +30,7 @@ typedef struct event_context {
 } event_context_t;
 
 // returns true when handled (stop sending to other listeners)
-typedef bool (*event_callback_t)(const char *type, void *sender,
+typedef bool (*event_callback_t)(const char *type, void *sender, void *listener,
                                  event_context_t event_context, void *context);
 
 typedef struct registered_event {

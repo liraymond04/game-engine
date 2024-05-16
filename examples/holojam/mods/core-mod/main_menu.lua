@@ -31,8 +31,8 @@ RegisterFunction("HOOK_MAIN_MENU_INIT", function()
     return false
   end)
 
-  event_register("TEST", "main_menu_listener the second", function(type, sender, event_context, context)
-    print("main_menu " .. type .. " event fired by " .. sender)
+  event_register("TEST", "main_menu_listener the second", function(type, sender, listener, event_context, context)
+    print("main_menu " .. type .. " event fired by " .. sender .. " listening from " .. listener)
     return false
   end)
 end)
@@ -49,28 +49,65 @@ RegisterFunction("HOOK_MAIN_MENU_PROCESS_INPUT", function()
   if IsKeyDown("KEY_G") then
     print(bg)
   end
+
+  if IsKeyPressed("KEY_M") then
+    Engine_SetMasterVolume(0.0)
+  end
+  if IsKeyPressed("KEY_U") then
+    Engine_SetMasterVolume(0.2)
+  end
+  if IsKeyPressed("KEY_I") then
+    Engine_SetMasterVolume(1.0)
+  end
+
+  if IsKeyPressed("KEY_MINUS") then
+    local group = audio_group_get(0)
+    local vol = audio_group_get_volume(group)
+    vol = tonumber(string.format('%.2f', vol - 0.1)) or 0
+    if vol >= 0.0 then
+      audio_group_set_volume(group, vol)
+    end
+  end
+  if IsKeyPressed("KEY_EQUAL") then
+    local group = audio_group_get(0)
+    local vol = audio_group_get_volume(group)
+    vol = tonumber(string.format('%.2f', vol + 0.1)) or 0
+    if vol <= 1.0 then
+      audio_group_set_volume(group, vol)
+    end
+  end
 end)
 
 RegisterFunction("HOOK_MAIN_MENU_UPDATE", function()
+  local dir = Vector2.new(0, 0)
   PLAYER.state.moving = false
+
   if IsKeyDown("KEY_W") then
-    PLAYER.y = PLAYER.y - player_speed
-    PLAYER.state.moving = true
+    dir.y = dir.y - player_speed
   end
   if IsKeyDown("KEY_S") then
-    PLAYER.y = PLAYER.y + player_speed
-    PLAYER.state.moving = true
+    dir.y = dir.y + player_speed
   end
   if IsKeyDown("KEY_A") then
-    PLAYER.x = PLAYER.x - player_speed
-    PLAYER.state.moving = true
-    PLAYER.state.facing_right = false
+    dir.x = dir.x - player_speed
   end
   if IsKeyDown("KEY_D") then
-    PLAYER.x = PLAYER.x + player_speed
-    PLAYER.state.moving = true
+    dir.x = dir.x + player_speed
+  end
+
+  if dir.x > 0 then
     PLAYER.state.facing_right = true
   end
+  if dir.x < 0 then
+    PLAYER.state.facing_right = false
+  end
+
+  if dir ~= Vector2.zero then
+    PLAYER.state.moving = true
+  end
+
+  PLAYER.x = PLAYER.x + dir.x
+  PLAYER.y = PLAYER.y + dir.y
 end)
 
 RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
@@ -81,21 +118,21 @@ RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
   if nk_begin("Main menu", nk_rect.new(0, 0, Engine_GetWidth(), Engine_GetHeight()), NK.WINDOW_BACKGROUND) then
     EASY = 0
     HARD = 1
-    op = op or EASY
-    property = property or 20
+    OP = OP or EASY
+    PROPERTY = PROPERTY or 20
     nk_layout_row_static(30, 80, 1)
     if nk_button_label("button") then
       print("button pressed")
     end
     nk_layout_row_dynamic(30, 2);
-    if nk_option_label("easy", op == EASY) then
-      op = EASY
+    if nk_option_label("easy", OP == EASY) then
+      OP = EASY
     end
-    if nk_option_label("hard", op == HARD) then
-      op = HARD
+    if nk_option_label("hard", OP == HARD) then
+      OP = HARD
     end
     nk_layout_row_dynamic(25, 1)
-    property = nk_property_int("Compression:", 0, property, 100, 10, 1)
+    PROPERTY = nk_property_int("Compression:", 0, PROPERTY, 100, 10, 1)
     nk_layout_row_dynamic(20, 1)
     nk_label("background:", 3)
     nk_layout_row_dynamic(25, 1)

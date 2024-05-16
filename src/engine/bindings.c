@@ -59,6 +59,7 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, nk_style_from_table);
 
     /* Engine */
+    LUA_REGISTER_FUNCTION(engine->L, Engine_SetMasterVolume);
     LUA_REGISTER_FUNCTION(engine->L, Engine_GetWidth);
     LUA_REGISTER_FUNCTION(engine->L, Engine_GetHeight);
     LUA_REGISTER_FUNCTION(engine->L, Engine_RunHook);
@@ -72,6 +73,11 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, event_register);
     LUA_REGISTER_FUNCTION(engine->L, event_unregister);
     LUA_REGISTER_FUNCTION(engine->L, event_fire);
+    LUA_REGISTER_FUNCTION(engine->L, audio_group_get);
+    LUA_REGISTER_FUNCTION(engine->L, audio_group_add_sound);
+    LUA_REGISTER_FUNCTION(engine->L, audio_group_remove_sound);
+    LUA_REGISTER_FUNCTION(engine->L, audio_group_get_volume);
+    LUA_REGISTER_FUNCTION(engine->L, audio_group_set_volume);
 }
 
 int _GetFrameTime(lua_State *L) {
@@ -433,6 +439,14 @@ int _nk_style_from_table(lua_State *L) {
     return 0;
 }
 
+int _Engine_SetMasterVolume(lua_State *L) {
+    float master_volume = luaL_checknumber(L, 1);
+
+    Engine_SetMasterVolume(engine_context, master_volume);
+
+    return 0;
+}
+
 int _Engine_GetWidth(lua_State *L) {
     int ret = engine_context->canvasWidth;
 
@@ -593,6 +607,54 @@ int _event_fire(lua_State *L) {
     lua_pushboolean(L, ret);
 
     return 1;
+}
+
+int _audio_group_get(lua_State *L) {
+    int index = luaL_checkinteger(L, 1);
+
+    audio_group_t *group = NULL;
+
+    if (index < AUDIO_GROUP_MAX)
+        group = engine_context->audio_groups[index];
+
+    lua_pushlightuserdata(L, group);
+
+    return 1;
+}
+
+int _audio_group_add_sound(lua_State *L) {
+    audio_group_t *group = (audio_group_t *)lua_touserdata(L, 1);
+    Sound *sound = (Sound *)lua_touserdata(L, 2);
+
+    audio_group_add_sound(group, *sound);
+
+    return 0;
+}
+
+int _audio_group_remove_sound(lua_State *L) {
+    audio_group_t *group = (audio_group_t *)lua_touserdata(L, 1);
+    Sound *sound = (Sound *)lua_touserdata(L, 2);
+
+    audio_group_remove_sound(group, *sound);
+
+    return 0;
+}
+
+int _audio_group_get_volume(lua_State *L) {
+    audio_group_t *group = (audio_group_t *)lua_touserdata(L, 1);
+
+    lua_pushnumber(L, group->volume);
+
+    return 1;
+}
+
+int _audio_group_set_volume(lua_State *L) {
+    audio_group_t *group = (audio_group_t *)lua_touserdata(L, 1);
+    float volume = luaL_checknumber(L, 2);
+
+    audio_group_set_volume(group, volume);
+
+    return 0;
 }
 
 static Texture2D luaL_checktexture2d(lua_State *L, int arg) {

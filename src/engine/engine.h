@@ -16,6 +16,7 @@
 #include "event.h"
 #include "hooks.h"
 #include "scene.h"
+#include "audio.h"
 
 #include "platform/platform.h"
 
@@ -50,6 +51,9 @@ typedef struct Engine {
     json_object *rres_info;
 
     vec_Resource_t *resource_groups[RESOURCE_GROUP_MAX];
+
+    float master_volume;
+    audio_group_t *audio_groups[AUDIO_GROUP_MAX];
 
     struct nk_context *nk_ctx;
 

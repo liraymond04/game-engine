@@ -155,12 +155,17 @@ end
 ---
 ---Load resource file from a rres resource path (the rres file should be loaded by engine already)
 ---@param path string rres resource path
+---@param group? audio_group_t Audio group to add sound resource to optionally
 ---
-function Animator:LoadResource(path)
+function Animator:LoadResource(path, group)
     local latest = #self.resources
     local resource = Engine_LoadResource(path, 0)
     if type(resource) ~= "boolean" then
         self.resources[latest + 1] = resource
+
+        if group and type(resource) == "userdata" then
+            audio_group_add_sound(group, resource)
+        end
     end
 end
 
@@ -211,4 +216,4 @@ function Animator:ChangeState(new_state)
 end
 
 ---Sound is a pointer to a sound loaded by raylib
----@alias Sound lightuserdata
+---@alias Sound userdata

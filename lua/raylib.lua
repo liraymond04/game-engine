@@ -136,6 +136,16 @@ Vector2 = {}
 Vector2.__index = Vector2
 
 ---
+---Vector2 equality override
+---@param a Vector2
+---@param b Vector2
+---@return boolean
+---
+Vector2.__eq = function(a, b)
+    return a.x == b.x and a.y == b.y
+end
+
+---
 ---Constructor function to create a new Vector2 object
 ---@param x number Vector x component
 ---@param y number Vector y component

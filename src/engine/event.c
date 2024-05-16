@@ -103,6 +103,7 @@ bool event_fire(const char *type, void *sender, event_context_t event_context,
                         event.lua_function_ref);
             lua_pushstring(engine_context->L, type);
             lua_pushstring(engine_context->L, sender);
+            lua_pushstring(engine_context->L, event.listener);
             lua_newtable(engine_context->L);
             for (int i = 0;
                  i <
@@ -116,7 +117,7 @@ bool event_fire(const char *type, void *sender, event_context_t event_context,
                 lua_settable(engine_context->L, -3);
             }
             lua_pushlightuserdata(engine_context->L, context);
-            if (lua_pcall(engine_context->L, 4, 1, 0) != 0) {
+            if (lua_pcall(engine_context->L, 5, 1, 0) != 0) {
                 fprintf(stderr, "Error calling Lua function: %s\n",
                         lua_tostring(engine_context->L, -1));
                 lua_pop(engine_context->L, 1); // Pop the error message
@@ -127,7 +128,8 @@ bool event_fire(const char *type, void *sender, event_context_t event_context,
             }
         }
         if (event.callback != NULL &&
-            event.callback(type, sender, event_context, NULL)) {
+            event.callback(type, sender, event.listener, event_context,
+                           context)) {
             // event has been handled (stop sending to other listeners)
             return true;
         }

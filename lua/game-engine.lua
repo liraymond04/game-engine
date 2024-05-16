@@ -11,6 +11,12 @@
 function RegisterFunction(hook_name, function_ref) end
 
 ---
+---Sets the value of the master volume and notifies event listeners
+---@param master_volume number Value from 0 to 1
+---
+function Engine_SetMasterVolume(master_volume) end
+
+---
 ---Returns the canvas width of the game window
 ---@return integer
 ---
@@ -107,3 +113,40 @@ function event_unregister(type, listener, on_event) end
 ---@return boolean True if handled, otherwise false.
 ---
 function event_fire(type, sender) end
+
+---@alias audio_group_t userdata
+
+---
+---Returns pointer to an engine initialized audio group given an index.
+---@param index integer Index of audio group.
+---@return audio_group_t Pointer to an audio group initialized by the engine.
+---
+function audio_group_get(index) end
+
+---
+---Add sound to audio group.
+---@param group audio_group_t Pointer to an audio group.
+---@param sound Sound Pointer to a Sound.
+---
+function audio_group_add_sound(group, sound) end
+
+---
+---Remove sound from audio group.
+---@param group audio_group_t Pointer to an audio group.
+---@param sound Sound Pointer to a Sound.
+---
+function audio_group_remove_sound(group, sound) end
+
+---
+---Get volume of an audio group.
+---@param group audio_group_t Pointer to an audio group.
+---@return number Volume of audio group.
+---
+function audio_group_get_volume(group) end
+
+---
+---Set volume of an audio group.
+---@param group audio_group_t Pointer to an audio group.
+---@param volume number Value from 0 to 1.
+---
+function audio_group_set_volume(group, volume) end

@@ -34,13 +34,19 @@ void Engine_Init(Engine_t *engine, int canvasWidth, int canvasHeight, int scale,
     //--------------------------------------------------------------------------------------
 
     // Resource groups
-    for (int i = 0; i < RESOURCE_GROUP_MAX; i++) { // Initialize pointers to null
+    for (int i = 0; i < RESOURCE_GROUP_MAX;
+         i++) { // Initialize pointers to null
         engine->resource_groups[i] = NULL;
     }
     Engine_ResourceGroup_Init(engine, 0); // initialize default group
 
     // Event system
     event_system_init(engine);
+
+    // Audio groups
+    for (int i = 0; i < AUDIO_GROUP_MAX; i++) {
+        engine->audio_groups[i] = audio_group_init();
+    }
 
     // Nuklear
     int fontSize = 10;
@@ -160,6 +166,11 @@ void Engine_Cleanup(Engine_t *engine) {
 
     // Nuklear
     UnloadNuklear(engine->nk_ctx);
+
+    // Audio
+    for (int i = 0; i < AUDIO_GROUP_MAX; i++) {
+        audio_group_deinit(engine->audio_groups[i], 0);
+    }
 
     // Event system
     event_system_free();
