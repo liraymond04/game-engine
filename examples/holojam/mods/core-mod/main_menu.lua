@@ -14,6 +14,9 @@ local bg = Color.new(255, 41, 55, 255)
 PLAYER = PLAYER or Animator.load("animators/player", cwd)
 print(PLAYER.anims["walk"].total_frames)
 
+local STYLE_BLUE = dofile(cwd() .. "styles/blue.lua")
+local STYLE_RED = dofile(cwd() .. "styles/red.lua")
+
 local test_text = Engine_LoadResource("assets/test.txt", 0)
 print(test_text)
 
@@ -74,8 +77,8 @@ RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
   PLAYER:Tick()
 
   -- DrawRectangle(player.x, player.y, 20, 20, bg)
-
-  if nk_begin("Main menu", nk_rect.new(50, 50, 230, 250), NK.WINDOW_BORDER | NK.WINDOW_MOVABLE | NK.WINDOW_SCALABLE | NK.WINDOW_MINIMIZABLE | NK.WINDOW_TITLE) then
+  nk_style_from_table(STYLE_BLUE);
+  if nk_begin("Main menu", nk_rect.new(0, 0, Engine_GetWidth(), Engine_GetHeight()), NK.WINDOW_BACKGROUND) then
     EASY = 0
     HARD = 1
     op = op or EASY
@@ -106,6 +109,14 @@ RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
       bg.a = nk_property_int("#A:", 0, bg.a, 255, 5, 1)
       nk_combo_end()
     end
+  end
+  nk_end()
+
+  STYLE_RED.NK_COLOR_HEADER = bg
+  nk_style_from_table(STYLE_RED)
+  if nk_begin("bruh", nk_rect.new(50, 50, 100, 100),
+        NK.WINDOW_BORDER | NK.WINDOW_MOVABLE | NK.WINDOW_SCALABLE |
+        NK.WINDOW_MINIMIZABLE | NK.WINDOW_TITLE) then
   end
   nk_end()
 end)

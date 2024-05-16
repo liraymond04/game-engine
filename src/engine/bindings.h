@@ -39,8 +39,12 @@ int _nk_combo_begin_color(lua_State *L);
 int _nk_combo_end(lua_State *L);
 int _nk_color_picker(lua_State *L);
 int _nk_propertyf(lua_State *L);
+int _nk_style_default(lua_State *L);
+int _nk_style_from_table(lua_State *L);
 
 /* Engine */
+int _Engine_GetWidth(lua_State *L);
+int _Engine_GetHeight(lua_State *L);
 int _Engine_RunHook(lua_State *L);
 int _Engine_ResourceGroup_Init(lua_State *L);
 int _Engine_ResourceGroup_Free(lua_State *L);

@@ -11,6 +11,18 @@
 function RegisterFunction(hook_name, function_ref) end
 
 ---
+---Returns the canvas width of the game window
+---@return integer
+---
+function Engine_GetWidth() end
+
+---
+---Returns the canvas height of the game window
+---@return integer
+---
+function Engine_GetHeight() end
+
+---
 ---Runs hook with string name if it exists and is registered
 ---@param hook_name string The name of the hook being run
 ---

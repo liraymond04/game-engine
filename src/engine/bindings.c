@@ -15,6 +15,7 @@ static Texture2D luaL_checktexture2d(lua_State *L, int arg);
 static Rectangle luaL_checkrectangle(lua_State *L, int arg);
 static Vector2 luaL_checkvector2(lua_State *L, int arg);
 static Color luaL_checkcolor(lua_State *L, int arg);
+static struct nk_color luaL_checknkcolor(lua_State *L, int arg);
 static struct nk_rect luaL_checknkrect(lua_State *L, int arg);
 static struct nk_vec2 luaL_checkvec2(lua_State *L, int arg);
 
@@ -54,8 +55,12 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, nk_combo_end);
     LUA_REGISTER_FUNCTION(engine->L, nk_color_picker);
     LUA_REGISTER_FUNCTION(engine->L, nk_propertyf);
+    LUA_REGISTER_FUNCTION(engine->L, nk_style_default);
+    LUA_REGISTER_FUNCTION(engine->L, nk_style_from_table);
 
     /* Engine */
+    LUA_REGISTER_FUNCTION(engine->L, Engine_GetWidth);
+    LUA_REGISTER_FUNCTION(engine->L, Engine_GetHeight);
     LUA_REGISTER_FUNCTION(engine->L, Engine_RunHook);
     LUA_REGISTER_FUNCTION(engine->L, Engine_ResourceGroup_Init);
     LUA_REGISTER_FUNCTION(engine->L, Engine_ResourceGroup_Free);
@@ -352,6 +357,98 @@ int _nk_propertyf(lua_State *L) {
     return 1;
 }
 
+int _nk_style_default(lua_State *L) {
+    nk_style_default(engine_context->nk_ctx);
+
+    return 0;
+}
+
+int _nk_style_from_table(lua_State *L) {
+    struct nk_color table[NK_COLOR_COUNT];
+
+    luaL_checktype(L, 1, LUA_TTABLE);
+
+    lua_getfield(L, 1, "NK_COLOR_TEXT");
+    lua_getfield(L, 1, "NK_COLOR_WINDOW");
+    lua_getfield(L, 1, "NK_COLOR_HEADER");
+    lua_getfield(L, 1, "NK_COLOR_BORDER");
+    lua_getfield(L, 1, "NK_COLOR_BUTTON");
+    lua_getfield(L, 1, "NK_COLOR_BUTTON_HOVER");
+    lua_getfield(L, 1, "NK_COLOR_BUTTON_ACTIVE");
+    lua_getfield(L, 1, "NK_COLOR_TOGGLE");
+    lua_getfield(L, 1, "NK_COLOR_TOGGLE_HOVER");
+    lua_getfield(L, 1, "NK_COLOR_TOGGLE_CURSOR");
+    lua_getfield(L, 1, "NK_COLOR_SELECT");
+    lua_getfield(L, 1, "NK_COLOR_SELECT_ACTIVE");
+    lua_getfield(L, 1, "NK_COLOR_SLIDER");
+    lua_getfield(L, 1, "NK_COLOR_SLIDER_CURSOR");
+    lua_getfield(L, 1, "NK_COLOR_SLIDER_CURSOR_HOVER");
+    lua_getfield(L, 1, "NK_COLOR_SLIDER_CURSOR_ACTIVE");
+    lua_getfield(L, 1, "NK_COLOR_PROPERTY");
+    lua_getfield(L, 1, "NK_COLOR_EDIT");
+    lua_getfield(L, 1, "NK_COLOR_EDIT_CURSOR");
+    lua_getfield(L, 1, "NK_COLOR_COMBO");
+    lua_getfield(L, 1, "NK_COLOR_CHART");
+    lua_getfield(L, 1, "NK_COLOR_CHART_COLOR");
+    lua_getfield(L, 1, "NK_COLOR_CHART_COLOR_HIGHLIGHT");
+    lua_getfield(L, 1, "NK_COLOR_SCROLLBAR");
+    lua_getfield(L, 1, "NK_COLOR_SCROLLBAR_CURSOR");
+    lua_getfield(L, 1, "NK_COLOR_SCROLLBAR_CURSOR_HOVER");
+    lua_getfield(L, 1, "NK_COLOR_SCROLLBAR_CURSOR_ACTIVE");
+    lua_getfield(L, 1, "NK_COLOR_TAB_HEADER");
+
+    table[NK_COLOR_TEXT] = luaL_checknkcolor(L, -28);
+    table[NK_COLOR_WINDOW] = luaL_checknkcolor(L, -27);
+    table[NK_COLOR_HEADER] = luaL_checknkcolor(L, -26);
+    table[NK_COLOR_BORDER] = luaL_checknkcolor(L, -25);
+    table[NK_COLOR_BUTTON] = luaL_checknkcolor(L, -24);
+    table[NK_COLOR_BUTTON_HOVER] = luaL_checknkcolor(L, -23);
+    table[NK_COLOR_BUTTON_ACTIVE] = luaL_checknkcolor(L, -22);
+    table[NK_COLOR_TOGGLE] = luaL_checknkcolor(L, -21);
+    table[NK_COLOR_TOGGLE_HOVER] = luaL_checknkcolor(L, -20);
+    table[NK_COLOR_TOGGLE_CURSOR] = luaL_checknkcolor(L, -19);
+    table[NK_COLOR_SELECT] = luaL_checknkcolor(L, -18);
+    table[NK_COLOR_SELECT_ACTIVE] = luaL_checknkcolor(L, -17);
+    table[NK_COLOR_SLIDER] = luaL_checknkcolor(L, -16);
+    table[NK_COLOR_SLIDER_CURSOR] = luaL_checknkcolor(L, -15);
+    table[NK_COLOR_SLIDER_CURSOR_HOVER] = luaL_checknkcolor(L, -14);
+    table[NK_COLOR_SLIDER_CURSOR_ACTIVE] = luaL_checknkcolor(L, -13);
+    table[NK_COLOR_PROPERTY] = luaL_checknkcolor(L, -12);
+    table[NK_COLOR_EDIT] = luaL_checknkcolor(L, -11);
+    table[NK_COLOR_EDIT_CURSOR] = luaL_checknkcolor(L, -10);
+    table[NK_COLOR_COMBO] = luaL_checknkcolor(L, -9);
+    table[NK_COLOR_CHART] = luaL_checknkcolor(L, -8);
+    table[NK_COLOR_CHART_COLOR] = luaL_checknkcolor(L, -7);
+    table[NK_COLOR_CHART_COLOR_HIGHLIGHT] = luaL_checknkcolor(L, -6);
+    table[NK_COLOR_SCROLLBAR] = luaL_checknkcolor(L, -5);
+    table[NK_COLOR_SCROLLBAR_CURSOR] = luaL_checknkcolor(L, -4);
+    table[NK_COLOR_SCROLLBAR_CURSOR_HOVER] = luaL_checknkcolor(L, -3);
+    table[NK_COLOR_SCROLLBAR_CURSOR_ACTIVE] = luaL_checknkcolor(L, -2);
+    table[NK_COLOR_TAB_HEADER] = luaL_checknkcolor(L, -1);
+
+    lua_pop(L, 28);
+
+    nk_style_from_table(engine_context->nk_ctx, table);
+
+    return 0;
+}
+
+int _Engine_GetWidth(lua_State *L) {
+    int ret = engine_context->canvasWidth;
+
+    lua_pushinteger(L, ret);
+
+    return 1;
+}
+
+int _Engine_GetHeight(lua_State *L) {
+    int ret = engine_context->canvasHeight;
+
+    lua_pushinteger(L, ret);
+
+    return 1;
+}
+
 int _Engine_RunHook(lua_State *L) {
     const char *name = luaL_checkstring(L, 1);
 
@@ -510,6 +607,8 @@ static Texture2D luaL_checktexture2d(lua_State *L, int arg) {
                           luaL_checkinteger(L, -3), luaL_checkinteger(L, -2),
                           luaL_checkinteger(L, -1) };
 
+    lua_pop(L, 5);
+
     return texture;
 }
 
@@ -524,6 +623,8 @@ static Rectangle luaL_checkrectangle(lua_State *L, int arg) {
                             luaL_checkinteger(L, -2),
                             luaL_checkinteger(L, -1) };
 
+    lua_pop(L, 4);
+
     return rectangle;
 }
 
@@ -533,6 +634,8 @@ static Vector2 luaL_checkvector2(lua_State *L, int arg) {
     lua_getfield(L, arg, "y");
 
     Vector2 vector = { luaL_checkinteger(L, -2), luaL_checkinteger(L, -1) };
+
+    lua_pop(L, 2);
 
     return vector;
 }
@@ -546,6 +649,27 @@ static Color luaL_checkcolor(lua_State *L, int arg) {
 
     Color color = { luaL_checkinteger(L, -4), luaL_checkinteger(L, -3),
                     luaL_checkinteger(L, -2), luaL_checkinteger(L, -1) };
+
+    lua_pop(L, 4);
+
+    return color;
+}
+
+static struct nk_color luaL_checknkcolor(lua_State *L, int arg) {
+    luaL_checktype(L, arg, LUA_TTABLE);
+    int stack_down = arg < 0, stack_count = 0;
+
+    lua_getfield(L, arg - (stack_down ? stack_count++ : 0), "r");
+    lua_getfield(L, arg - (stack_down ? stack_count++ : 0), "g");
+    lua_getfield(L, arg - (stack_down ? stack_count++ : 0), "b");
+    lua_getfield(L, arg - (stack_down ? stack_count++ : 0), "a");
+
+    struct nk_color color = { luaL_checkinteger(L, -4),
+                              luaL_checkinteger(L, -3),
+                              luaL_checkinteger(L, -2),
+                              luaL_checkinteger(L, -1) };
+
+    lua_pop(L, 4);
 
     return color;
 }
@@ -561,6 +685,8 @@ static struct nk_rect luaL_checknkrect(lua_State *L, int arg) {
                             luaL_checkinteger(L, -2),
                             luaL_checkinteger(L, -1) };
 
+    lua_pop(L, 4);
+
     return rect;
 }
 
@@ -570,6 +696,8 @@ static struct nk_vec2 luaL_checkvec2(lua_State *L, int arg) {
     lua_getfield(L, arg, "y");
 
     struct nk_vec2 vec = { luaL_checkinteger(L, -2), luaL_checkinteger(L, -1) };
+
+    lua_pop(L, 2);
 
     return vec;
 }

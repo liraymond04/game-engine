@@ -163,6 +163,25 @@ function nk_combo_end() end
 ---
 function nk_color_picker(raylib_color, colorformat) end
 
--- int _nk_color_picker(lua_State *L);
--- int _nk_propertyf(lua_State *L);
---
+---
+---Function to add property with float values
+---@param name string Name of property
+---@param min number Minimum value of property
+---@param val number Current value of property
+---@param max number Maximum value of property
+---@param step number Amount to change with step buttons
+---@param inc_per_pixel number Amount to change per pixel
+---@return number Float value of property
+---
+function nk_propertyf(name, min, val, max, step, inc_per_pixel) end
+
+---
+---Function to set current context style to default style
+---
+function nk_style_default() end
+
+---
+---Function to set current context style from color table
+---@param table { [string]: Color }
+---
+function nk_style_from_table(table) end
