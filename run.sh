@@ -87,11 +87,11 @@ fi
 
 # Create symbolic links to Lua definitions in the running directory
 output_directory="$running_directory/bin"
-[ ! -d "$output_directory" ] && mkdir $output_directory
-for file in "$root_directory/lua"/*; do
-    filename=$(basename -- "$file")
-    if ! [ -f "$output_directory/$filename" ]; then
-        ln -s $file "$output_directory/$filename"
+[ ! -d "$output_directory" ] && mkdir -p "$output_directory"
+for item in "$root_directory/lua"/*; do
+    name=$(basename -- "$item")
+    if ! [ -e "$output_directory/$name" ]; then
+        ln -s "$item" "$output_directory/$name"
     fi
 done
 
