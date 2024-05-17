@@ -7,12 +7,23 @@ local cwd = function()
   return nil
 end
 
-local player_speed = 4.0
+ECS.utils.loadNamespace(cwd() .. "components")
+local Systems = {}
+ECS.utils.loadNamespace(cwd() .. "systems", Systems)
+
+local world = ECS.world()
+
+for _, system in pairs(Systems) do
+  world:addSystem(system)
+end
 
 local bg = Color.new(255, 41, 55, 255)
 
-PLAYER = PLAYER or Animator.load("animators/player", cwd)
-print(PLAYER.anims["walk"].total_frames)
+local player = ECS.entity(world)
+    :give("position", 20, 20)
+    :give("velocity", 0, 0)
+    :give("speed", 4.0)
+    :give("animator", Animator.load("animators/player", cwd))
 
 local STYLE_BLUE = dofile(cwd() .. "styles/blue.lua")
 local STYLE_RED = dofile(cwd() .. "styles/red.lua")
@@ -22,9 +33,6 @@ print(test_text)
 
 RegisterFunction("HOOK_MAIN_MENU_INIT", function()
   print("(Core Mod): Main menu init!")
-
-  PLAYER.x = 20
-  PLAYER.y = 20
 
   event_register("TEST", "main_menu_listener", function()
     print("main_menu TEST event fired")
@@ -79,39 +87,11 @@ RegisterFunction("HOOK_MAIN_MENU_PROCESS_INPUT", function()
 end)
 
 RegisterFunction("HOOK_MAIN_MENU_UPDATE", function()
-  local dir = Vector2.new(0, 0)
-  PLAYER.state.moving = false
-
-  if IsKeyDown("KEY_W") then
-    dir.y = dir.y - player_speed
-  end
-  if IsKeyDown("KEY_S") then
-    dir.y = dir.y + player_speed
-  end
-  if IsKeyDown("KEY_A") then
-    dir.x = dir.x - player_speed
-  end
-  if IsKeyDown("KEY_D") then
-    dir.x = dir.x + player_speed
-  end
-
-  if dir.x > 0 then
-    PLAYER.state.facing_right = true
-  end
-  if dir.x < 0 then
-    PLAYER.state.facing_right = false
-  end
-
-  if dir ~= Vector2.zero then
-    PLAYER.state.moving = true
-  end
-
-  PLAYER.x = PLAYER.x + dir.x
-  PLAYER.y = PLAYER.y + dir.y
+  world:emit("update")
 end)
 
 RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
-  PLAYER:Tick()
+  world:emit("draw")
 
   -- DrawRectangle(player.x, player.y, 20, 20, bg)
   nk_style_from_table(STYLE_BLUE);

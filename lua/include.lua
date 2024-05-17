@@ -7,13 +7,13 @@ local cwd = function()
   end
   return nil
 end
-  
-local include = function(path)
-  dofile(cwd() .. path .. ".lua")
-end
+
+package.path = package.path .. ";" .. cwd() .. "?/init.lua"
+package.path = package.path .. ";" .. cwd() .. "?.lua"
 
 -- Includes
-include("game-engine")
-include("raylib")
-include("nuklear")
-include("animation")
+require("game-engine")
+require("raylib")
+require("nuklear")
+require("animation")
+ECS = require("concord")
