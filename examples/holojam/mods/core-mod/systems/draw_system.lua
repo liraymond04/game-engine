@@ -4,6 +4,7 @@ local draw_system = ECS.system({
 
 function draw_system:draw()
     for _, e in ipairs(self.pool) do
+        ---@type Animator
         local animator = e.animator.a
         animator.x = e.position.x
         animator.y = e.position.y

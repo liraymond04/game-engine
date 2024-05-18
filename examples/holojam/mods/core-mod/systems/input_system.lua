@@ -5,6 +5,7 @@ local input_system = ECS.system({
 function input_system:update()
     for _, e in ipairs(self.pool) do
         local dir = Vector2.new(0, 0)
+        ---@type Animator
         local animator = e.animator.a
         animator.state.moving = false
 
