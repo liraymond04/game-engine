@@ -37,6 +37,7 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, DrawText);
     LUA_REGISTER_FUNCTION(engine->L, DrawLine);
     LUA_REGISTER_FUNCTION(engine->L, DrawRectangle);
+    LUA_REGISTER_FUNCTION(engine->L, DrawRectangleLines);
     LUA_REGISTER_FUNCTION(engine->L, DrawCircle);
     LUA_REGISTER_FUNCTION(engine->L, UnloadTexture);
     LUA_REGISTER_FUNCTION(engine->L, PlaySound);
@@ -193,6 +194,18 @@ int _DrawRectangle(lua_State *L) {
     Color color = luaL_checkcolor(L, 5);
 
     DrawRectangle(posX, posY, width, height, color);
+
+    return 0;
+}
+
+int _DrawRectangleLines(lua_State *L) {
+    int posX = luaL_checkinteger(L, 1);
+    int posY = luaL_checkinteger(L, 2);
+    int width = luaL_checkinteger(L, 3);
+    int height = luaL_checkinteger(L, 4);
+    Color color = luaL_checkcolor(L, 5);
+
+    DrawRectangleLines(posX, posY, width, height, color);
 
     return 0;
 }

@@ -21,6 +21,7 @@ int _DrawTexturePro(lua_State *L);
 int _DrawText(lua_State *L);
 int _DrawLine(lua_State *L);
 int _DrawRectangle(lua_State *L);
+int _DrawRectangleLines(lua_State *L);
 int _DrawCircle(lua_State *L);
 int _UnloadTexture(lua_State *L);
 int _PlaySound(lua_State *L);

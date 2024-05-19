@@ -7,23 +7,37 @@ local cwd = function()
   return nil
 end
 
-ECS.utils.loadNamespace(cwd() .. "components")
-local Systems = {}
-ECS.utils.loadNamespace(cwd() .. "systems", Systems)
+if not WORLD then
+  ECS.utils.loadNamespace(cwd() .. "components")
+  local Systems = {}
+  ECS.utils.loadNamespace(cwd() .. "systems", Systems)
 
-local world = ECS.world()
+  WORLD = ECS.world()
 
-for _, system in pairs(Systems) do
-  world:addSystem(system)
+  for _, system in pairs(Systems) do
+    WORLD:addSystem(system)
+  end
 end
 
 local bg = Color.new(255, 41, 55, 255)
 
-local player = ECS.entity(world)
-    :give("position", 20, 20)
-    :give("velocity", 0, 0)
+if not PLAYER then
+  PLAYER = ECS.entity(WORLD)
+end
+PLAYER
+    :ensure("animator", Animator.load("animators/player", cwd))
+    :ensure("position", 20, 20)
+    :ensure("velocity", 0, 0)
     :give("speed", 4.0)
-    :give("animator", Animator.load("animators/player", cwd))
+    :give("box_collider", Vector2.new(40, 55), Vector2.new(30, 45))
+
+if not BOX then
+  BOX = ECS.entity(WORLD)
+end
+BOX
+    :ensure("position", 100, 200)
+    :give("box_draw", 50, 50, Color.RED)
+    :give("box_collider", Vector2.new(50, 50), Vector2.zero)
 
 local STYLE_BLUE = dofile(cwd() .. "styles/blue.lua")
 local STYLE_RED = dofile(cwd() .. "styles/red.lua")
@@ -87,11 +101,15 @@ RegisterFunction("HOOK_MAIN_MENU_PROCESS_INPUT", function()
 end)
 
 RegisterFunction("HOOK_MAIN_MENU_UPDATE", function()
-  world:emit("update")
+  WORLD:emit("update")
 end)
 
 RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
-  world:emit("draw")
+  WORLD:emit("draw")
+
+  if DEBUG then
+    WORLD:emit("debug_draw")
+  end
 
   -- DrawRectangle(player.x, player.y, 20, 20, bg)
   nk_style_from_table(STYLE_BLUE);

@@ -258,6 +258,16 @@ function DrawLine(startPosX, startPosY, endPosX, endPosY, color) end
 function DrawRectangle(posX, posY, width, height, color) end
 
 ---
+---Draw rectangle outline
+---@param posX integer The x-coordinate of the rectangle.
+---@param posY integer The y-coordinate of the rectangle.
+---@param width integer The width of the rectangle.
+---@param height integer The height of the rectangle.
+---@param color Color The color of the rectangle.
+---
+function DrawRectangleLines(posX, posY, width, height, color) end
+
+---
 ---Draw a color-filled circle
 ---@param centerX integer The center x-coordinate of the circle.
 ---@param centerY integer The center y-coordinate of the circle.

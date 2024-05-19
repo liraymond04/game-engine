@@ -1,5 +1,7 @@
 print("Core Mod loaded!")
 
+DEBUG = true
+
 local cwd = function()
   local info = debug.getinfo(1, "S")
   if info and info.source then

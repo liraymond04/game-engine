@@ -32,12 +32,12 @@ player_animator.Before = function(self)
 end
 
 player_animator.state_enter["idle"] = function(self)
-  print('enter idle')
+  -- print('enter idle')
   self.anims["idle"].current_frame = 1
 end
 
 player_animator.state_enter["walk"] = function(self)
-  print('enter walk')
+  -- print('enter walk')
   self.anims["walk"].current_frame = 1
 end
 
