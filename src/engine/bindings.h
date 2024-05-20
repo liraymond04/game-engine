@@ -42,6 +42,11 @@ int _nk_color_picker(lua_State *L);
 int _nk_propertyf(lua_State *L);
 int _nk_style_default(lua_State *L);
 int _nk_style_from_table(lua_State *L);
+int _nk_group_begin(lua_State *L);
+int _nk_group_end(lua_State *L);
+int _nk_group_set_scroll(lua_State *L);
+int _nk_edit_string_zero_terminated(lua_State *L);
+int _nk_input_is_key_pressed(lua_State *L);
 
 /* Engine */
 int _Engine_SetMasterVolume(lua_State *L);

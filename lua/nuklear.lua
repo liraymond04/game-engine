@@ -185,3 +185,9 @@ function nk_style_default() end
 ---@param table { [string]: Color }
 ---
 function nk_style_from_table(table) end
+
+function nk_group_begin(name, flags) end
+function nk_group_end() end
+function nk_group_set_scroll(name, buffer, x_offset, y_offset) end
+function nk_edit_string_zero_terminated(flags, buffer_table, max) end
+function nk_input_is_key_pressed(key_enum) end

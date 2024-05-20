@@ -1,5 +1,5 @@
 local input_system = ECS.system({
-    pool = { "velocity", "speed", "animator" }
+    pool = { "velocity", "speed", "animator", "controllable" }
 })
 
 function input_system:update()

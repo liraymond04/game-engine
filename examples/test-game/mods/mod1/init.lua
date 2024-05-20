@@ -13,7 +13,7 @@ local player_speed = 4.0
 local RED = { r = 255, g = 41, b = 55, a = 255 }
 
 RegisterFunction("HOOK_BEFORE_MAIN_MENU_PROCESS_INPUT", function()
-  if IsKeyDown("KEY_ENTER") then
+  if IsKeyDown("KEY_BACKSLASH") then
     Engine_Scene_Switch("scenes/bin/libsettings_menu")
   end
 end)

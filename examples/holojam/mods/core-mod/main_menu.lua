@@ -30,6 +30,7 @@ PLAYER
     :ensure("velocity", 0, 0)
     :give("speed", 4.0)
     :give("box_collider", Vector2.new(40, 55), Vector2.new(30, 45))
+    :give("controllable")
 
 if not BOX then
   BOX = ECS.entity(WORLD)
@@ -44,6 +45,16 @@ local STYLE_RED = dofile(cwd() .. "styles/red.lua")
 
 local test_text = Engine_LoadResource("assets/test.txt", 0)
 print(test_text)
+
+MAX_HISTORY = 32
+MAX_INPUT_LENGTH = 256
+
+local debug_console = {
+  input_buffer = "",
+  history = {},
+  history_count = 0,
+  scroll_to_bottom = false
+}
 
 RegisterFunction("HOOK_MAIN_MENU_INIT", function()
   print("(Core Mod): Main menu init!")
@@ -60,8 +71,12 @@ RegisterFunction("HOOK_MAIN_MENU_INIT", function()
 end)
 
 RegisterFunction("HOOK_MAIN_MENU_PROCESS_INPUT", function()
-  if IsKeyDown("KEY_ENTER") then
+  if IsKeyDown("KEY_BACKSLASH") then
     Engine_Mod_Scene_Switch("SETTINGS_MENU")
+  end
+
+  if EDIT_ACTIVE then
+    return
   end
 
   if IsKeyDown("KEY_F") then
@@ -80,6 +95,10 @@ RegisterFunction("HOOK_MAIN_MENU_PROCESS_INPUT", function()
   end
   if IsKeyPressed("KEY_I") then
     Engine_SetMasterVolume(1.0)
+  end
+
+  if IsKeyPressed("KEY_TAB") then
+    DEBUG = not DEBUG
   end
 
   if IsKeyPressed("KEY_MINUS") then
@@ -149,9 +168,46 @@ RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
 
   STYLE_RED.NK_COLOR_HEADER = bg
   nk_style_from_table(STYLE_RED)
-  if nk_begin("bruh", nk_rect.new(50, 50, 100, 100),
+  if (nk_begin("Console", nk_rect.new(50, 50, 400, 300),
         NK.WINDOW_BORDER | NK.WINDOW_MOVABLE | NK.WINDOW_SCALABLE |
-        NK.WINDOW_MINIMIZABLE | NK.WINDOW_TITLE) then
+        NK.WINDOW_MINIMIZABLE | NK.WINDOW_TITLE)) then
+    -- Output history
+    nk_layout_row_dynamic(200, 1)
+    if (nk_group_begin("History", NK.WINDOW_BORDER)) then
+      for i = 1, debug_console.history_count do
+        nk_layout_row_dynamic(20, 1)
+        nk_label("> " .. debug_console.history[i], NK.TEXT_LEFT)
+      end
+      if (debug_console.scroll_to_bottom) then
+        nk_group_set_scroll("History", 0, debug_console.history_count * 20)
+        debug_console.scroll_to_bottom = false
+      end
+    end
+    nk_group_end()
+
+    -- Input field
+    nk_layout_row_dynamic(25, 1);
+    local command, state = nk_edit_string_zero_terminated(NK.EDIT_FIELD, debug_console.input_buffer, MAX_INPUT_LENGTH)
+    debug_console.input_buffer = command
+
+    if (state & NK.EDIT_ACTIVE) ~= 0 then
+      if (nk_input_is_key_pressed(NK.KEY_ENTER)) then
+        debug_console.history[(debug_console.history_count % MAX_HISTORY) + 1] = debug_console.input_buffer
+        debug_console.history_count = debug_console.history_count + 1
+        debug_console.input_buffer = '\0'
+        debug_console.scroll_to_bottom = true
+      end
+    end
+
+    if (state & NK.EDIT_ACTIVATED) ~= 0 then
+      PLAYER:remove("controllable")
+      EDIT_ACTIVE = true
+    end
+
+    if (state & NK.EDIT_DEACTIVATED) ~= 0 then
+      PLAYER:give("controllable")
+      EDIT_ACTIVE = false
+    end
   end
   nk_end()
 end)

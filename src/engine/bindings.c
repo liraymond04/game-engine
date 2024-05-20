@@ -58,6 +58,11 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, nk_propertyf);
     LUA_REGISTER_FUNCTION(engine->L, nk_style_default);
     LUA_REGISTER_FUNCTION(engine->L, nk_style_from_table);
+    LUA_REGISTER_FUNCTION(engine->L, nk_group_begin);
+    LUA_REGISTER_FUNCTION(engine->L, nk_group_end);
+    LUA_REGISTER_FUNCTION(engine->L, nk_group_set_scroll);
+    LUA_REGISTER_FUNCTION(engine->L, nk_edit_string_zero_terminated);
+    LUA_REGISTER_FUNCTION(engine->L, nk_input_is_key_pressed);
 
     /* Engine */
     LUA_REGISTER_FUNCTION(engine->L, Engine_SetMasterVolume);
@@ -450,6 +455,61 @@ int _nk_style_from_table(lua_State *L) {
     nk_style_from_table(engine_context->nk_ctx, table);
 
     return 0;
+}
+
+int _nk_group_begin(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+    int flags = luaL_checkinteger(L, 2);
+
+    int ret = nk_group_begin(engine_context->nk_ctx, name, flags);
+
+    lua_pushboolean(L, ret);
+
+    return 1;
+}
+
+int _nk_group_end(lua_State *L) {
+    nk_group_end(engine_context->nk_ctx);
+
+    return 0;
+}
+
+int _nk_group_set_scroll(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+    int x_offset = luaL_checkinteger(L, 2);
+    int y_offset = luaL_checkinteger(L, 3);
+
+    nk_group_set_scroll(engine_context->nk_ctx, name, x_offset, y_offset);
+
+    return 0;
+}
+
+int _nk_edit_string_zero_terminated(lua_State *L) {
+    int flags = luaL_checkinteger(L, 1);
+    const char *buffer = luaL_checkstring(L, 2);
+    int max = luaL_checkinteger(L, 3);
+
+    char modified_str[256];
+    snprintf(modified_str, sizeof(modified_str), "%s", buffer);
+
+    // TODO
+    // actually pass a filter instead of the default function
+    int ret = nk_edit_string_zero_terminated(engine_context->nk_ctx, flags, modified_str, max, nk_filter_default);
+
+    lua_pushstring(L, modified_str);
+    lua_pushinteger(L, ret);
+
+    return 2;
+}
+
+int _nk_input_is_key_pressed(lua_State *L) {
+    int key_enums = luaL_checkinteger(L, 1);
+
+    int ret = nk_input_is_key_pressed(&engine_context->nk_ctx->input, key_enums);
+
+    lua_pushboolean(L, ret);
+
+    return 1;
 }
 
 int _Engine_SetMasterVolume(lua_State *L) {
@@ -927,6 +987,7 @@ void map_keys() {
 void map_enums(lua_State *L) {
     lua_newtable(L);
 
+    // Window flags
     lua_pushinteger(L, NK_WINDOW_BORDER);
     lua_setfield(L, -2, "WINDOW_BORDER");
     lua_pushinteger(L, NK_WINDOW_MOVABLE);
@@ -951,6 +1012,100 @@ void map_enums(lua_State *L) {
     lua_setfield(L, -2, "WINDOW_SCALE_LEFT");
     lua_pushinteger(L, NK_WINDOW_NO_INPUT);
     lua_setfield(L, -2, "WINDOW_NO_INPUT");
+    
+    // Key enums
+    lua_pushinteger(L, NK_KEY_NONE);
+    lua_setfield(L, -2, "KEY_NONE");
+    lua_pushinteger(L, NK_KEY_SHIFT);
+    lua_setfield(L, -2, "KEY_SHIFT");
+    lua_pushinteger(L, NK_KEY_CTRL);
+    lua_setfield(L, -2, "KEY_CTRL");
+    lua_pushinteger(L, NK_KEY_DEL);
+    lua_setfield(L, -2, "KEY_DEL");
+    lua_pushinteger(L, NK_KEY_ENTER);
+    lua_setfield(L, -2, "KEY_ENTER");
+    lua_pushinteger(L, NK_KEY_TAB);
+    lua_setfield(L, -2, "KEY_TAB");
+    lua_pushinteger(L, NK_KEY_BACKSPACE);
+    lua_setfield(L, -2, "KEY_BACKSPACE");
+    lua_pushinteger(L, NK_KEY_COPY);
+    lua_setfield(L, -2, "KEY_COPY");
+    lua_pushinteger(L, NK_KEY_CUT);
+    lua_setfield(L, -2, "KEY_CUT");
+    lua_pushinteger(L, NK_KEY_PASTE);
+    lua_setfield(L, -2, "KEY_PASTE");
+    lua_pushinteger(L, NK_KEY_UP);
+    lua_setfield(L, -2, "KEY_UP");
+    lua_pushinteger(L, NK_KEY_DOWN);
+    lua_setfield(L, -2, "KEY_DOWN");
+    lua_pushinteger(L, NK_KEY_LEFT);
+    lua_setfield(L, -2, "KEY_LEFT");
+    lua_pushinteger(L, NK_KEY_RIGHT);
+    lua_setfield(L, -2, "KEY_RIGHT");
+    lua_pushinteger(L, NK_KEY_TEXT_INSERT_MODE);
+    lua_setfield(L, -2, "KEY_TEXT_INSERT_MODE");
+    lua_pushinteger(L, NK_KEY_TEXT_REPLACE_MODE);
+    lua_setfield(L, -2, "KEY_TEXT_REPLACE_MODE");
+    lua_pushinteger(L, NK_KEY_TEXT_RESET_MODE);
+    lua_setfield(L, -2, "KEY_TEXT_RESET_MODE");
+    lua_pushinteger(L, NK_KEY_TEXT_LINE_START);
+    lua_setfield(L, -2, "KEY_TEXT_LINE_START");
+    lua_pushinteger(L, NK_KEY_TEXT_LINE_END);
+    lua_setfield(L, -2, "KEY_TEXT_LINE_END");
+    lua_pushinteger(L, NK_KEY_TEXT_START);
+    lua_setfield(L, -2, "KEY_TEXT_START");
+    lua_pushinteger(L, NK_KEY_TEXT_END);
+    lua_setfield(L, -2, "KEY_TEXT_END");
+    lua_pushinteger(L, NK_KEY_TEXT_UNDO);
+    lua_setfield(L, -2, "KEY_TEXT_UNDO");
+    lua_pushinteger(L, NK_KEY_TEXT_REDO);
+    lua_setfield(L, -2, "KEY_TEXT_REDO");
+    lua_pushinteger(L, NK_KEY_TEXT_SELECT_ALL);
+    lua_setfield(L, -2, "KEY_TEXT_SELECT_ALL");
+    lua_pushinteger(L, NK_KEY_TEXT_WORD_LEFT);
+    lua_setfield(L, -2, "KEY_TEXT_WORD_LEFT");
+    lua_pushinteger(L, NK_KEY_TEXT_WORD_RIGHT);
+    lua_setfield(L, -2, "KEY_TEXT_WORD_RIGHT");
+    lua_pushinteger(L, NK_KEY_SCROLL_START);
+    lua_setfield(L, -2, "KEY_SCROLL_START");
+    lua_pushinteger(L, NK_KEY_SCROLL_END);
+    lua_setfield(L, -2, "KEY_SCROLL_END");
+    lua_pushinteger(L, NK_KEY_SCROLL_DOWN);
+    lua_setfield(L, -2, "KEY_SCROLL_DOWN");
+    lua_pushinteger(L, NK_KEY_SCROLL_UP);
+    lua_setfield(L, -2, "KEY_SCROLL_UP");
+    lua_pushinteger(L, NK_KEY_MAX);
+    lua_setfield(L, -2, "KEY_MAX");
+
+    // Text alignment
+    lua_pushinteger(L, NK_TEXT_LEFT);
+    lua_setfield(L, -2, "TEXT_LEFT");
+    lua_pushinteger(L, NK_TEXT_CENTERED);
+    lua_setfield(L, -2, "TEXT_CENTERED");
+    lua_pushinteger(L, NK_TEXT_RIGHT);
+    lua_setfield(L, -2, "TEXT_RIGHT");
+
+    // Edit types
+    lua_pushinteger(L, NK_EDIT_SIMPLE);
+    lua_setfield(L, -2, "EDIT_SIMPLE");
+    lua_pushinteger(L, NK_EDIT_FIELD);
+    lua_setfield(L, -2, "EDIT_FIELD");
+    lua_pushinteger(L, NK_EDIT_BOX);
+    lua_setfield(L, -2, "EDIT_BOX");
+    lua_pushinteger(L, NK_EDIT_EDITOR);
+    lua_setfield(L, -2, "EDIT_EDITOR");
+
+    // Edit events
+    lua_pushinteger(L, NK_EDIT_ACTIVE);
+    lua_setfield(L, -2, "EDIT_ACTIVE");
+    lua_pushinteger(L, NK_EDIT_INACTIVE);
+    lua_setfield(L, -2, "EDIT_INACTIVE");
+    lua_pushinteger(L, NK_EDIT_ACTIVATED);
+    lua_setfield(L, -2, "EDIT_ACTIVATED");
+    lua_pushinteger(L, NK_EDIT_DEACTIVATED);
+    lua_setfield(L, -2, "EDIT_DEACTIVATED");
+    lua_pushinteger(L, NK_EDIT_COMMITED);
+    lua_setfield(L, -2, "EDIT_COMMITED");
 
     lua_setglobal(L, "NK");
 }
