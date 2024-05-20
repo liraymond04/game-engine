@@ -2,6 +2,8 @@ local input_system = ECS.system({
     pool = { "velocity", "speed", "animator", "controllable" }
 })
 
+input_system.priority = 1
+
 function input_system:update()
     for _, e in ipairs(self.pool) do
         local dir = Vector2.new(0, 0)

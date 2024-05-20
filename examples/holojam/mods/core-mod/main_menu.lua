@@ -14,7 +14,22 @@ if not WORLD then
 
   WORLD = ECS.world()
 
+  local system_sort = {}
   for _, system in pairs(Systems) do
+    table.insert(system_sort, system)
+  end
+
+  table.sort(system_sort, function(a, b)
+    if a.priority and b.priority then
+      return a.priority < b.priority
+    elseif a.priority then
+      return true
+    else
+      return false
+    end
+  end)
+   
+  for _, system in ipairs(system_sort) do
     WORLD:addSystem(system)
   end
 end
@@ -53,6 +68,7 @@ local debug_console = {
   input_buffer = "",
   history = {},
   history_count = 0,
+  current_command = 0,
   scroll_to_bottom = false
 }
 
@@ -191,9 +207,51 @@ RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
     debug_console.input_buffer = command
 
     if (state & NK.EDIT_ACTIVE) ~= 0 then
+      if (nk_input_is_key_pressed(NK.KEY_DOWN)) then
+        if debug_console.current_command + 1 <= debug_console.history_count then
+          debug_console.current_command = debug_console.current_command + 1
+          debug_console.input_buffer = debug_console.history[debug_console.current_command]
+        elseif debug_console.current_command + 1 == debug_console.history_count + 1 then
+          debug_console.current_command = debug_console.current_command + 1
+          debug_console.input_buffer = ""
+        end
+      end
+      if (nk_input_is_key_pressed(NK.KEY_UP)) then
+        local count = ((debug_console.current_command - 1) % MAX_HISTORY)
+        if debug_console.current_command > 0 and debug_console.history[count] ~= nil then
+          debug_console.current_command = debug_console.current_command - 1
+          debug_console.input_buffer = debug_console.history[count]
+        end
+      end
       if (nk_input_is_key_pressed(NK.KEY_ENTER)) then
-        debug_console.history[(debug_console.history_count % MAX_HISTORY) + 1] = debug_console.input_buffer
+        local argc = {}
+        local regex = ("([^%s]+)"):format(" ")
+        for each in command:gmatch(regex) do
+          table.insert(argc, each)
+        end
+
+        if argc[1] == "set" then
+          local val = tonumber(argc[3])
+
+          if val then
+            _G[argc[2]] = val
+          else
+            val = argc[3]
+            local len = #val
+            if val == "true" or val == "false" then
+              _G[argc[2]] = val == "true"
+            elseif val:sub(1, 1) == '"' and val:sub(len, len) == '"' then
+              _G[argc[2]] = val:sub(2, len - 1)
+            end
+          end
+        elseif argc[1] == "get" then
+          local val = _G[argc[2]]
+          command = command .. "\t\t\t" .. tostring(val)
+        end
+
+        debug_console.history[(debug_console.history_count % MAX_HISTORY) + 1] = command
         debug_console.history_count = debug_console.history_count + 1
+        debug_console.current_command = debug_console.history_count + 1
         debug_console.input_buffer = '\0'
         debug_console.scroll_to_bottom = true
       end

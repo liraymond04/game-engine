@@ -2,6 +2,8 @@ local draw_system = ECS.system({
     pool = { "position", "animator" }
 })
 
+draw_system.priority = 101
+
 function draw_system:draw()
     for _, e in ipairs(self.pool) do
         ---@type Animator

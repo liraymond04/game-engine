@@ -2,6 +2,8 @@ local collision_system = ECS.system({
     pool = { "position", "box_collider" }
 })
 
+collision_system.priority = 11
+
 function collision_system:debug_draw()
     for _, e in ipairs(self.pool) do
         local pos = e.position
@@ -18,7 +20,40 @@ function collision_system:update()
             end
 
             if check_collision(e1, e2) then
-                print("colliding")
+                local posA = e1.position
+                local offsetA = e1.box_collider.offset
+                local boxA = e1.box_collider.hitbox
+
+                local posB = e2.position
+                local offsetB = e2.box_collider.offset
+                local boxB = e2.box_collider.hitbox
+
+                local ax1 = posA.x + offsetA.x
+                local ax2 = ax1 + boxA.x
+                local ay1 = posA.y + offsetA.y
+                local ay2 = ay1 + boxA.y
+
+                local bx1 = posB.x + offsetB.x
+                local bx2 = bx1 + boxB.x
+                local by1 = posB.y + offsetB.y
+                local by2 = by1 + boxB.y
+
+                local overlapX = math.min(ax2, bx2) - math.max(ax1, bx1)
+                local overlapY = math.min(ay2, by2) - math.max(ay1, by1)
+
+                if overlapX < overlapY then
+                    if ax1 < bx1 then
+                        e1.position.x = posA.x - overlapX
+                    else
+                        e1.position.x = posA.x + overlapX
+                    end
+                else
+                    if ay1 < by1 then
+                        e1.position.y = posA.y - overlapY
+                    else
+                        e1.position.y = posA.y + overlapY
+                    end
+                end
             end
 
             ::continue::
