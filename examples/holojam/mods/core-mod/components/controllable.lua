@@ -1,5 +1,7 @@
 ---@param component any
 ---@param input_map { [string]: string }
-ECS.component("controllable", function(component, input_map)
+ECS.component("player_input", function(component, input_map)
     component.input_map = input_map
 end)
+
+ECS.component("controllable")

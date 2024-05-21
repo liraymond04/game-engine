@@ -28,7 +28,7 @@ if not WORLD then
       return false
     end
   end)
-   
+
   for _, system in ipairs(system_sort) do
     WORLD:addSystem(system)
   end
@@ -45,7 +45,8 @@ PLAYER
     :ensure("velocity", 0, 0)
     :give("speed", 4.0)
     :give("box_collider", Vector2.new(40, 55), Vector2.new(30, 45))
-    :give("controllable", {
+    :give("controllable")
+    :give("player_input", {
       up = "KEY_W",
       down = "KEY_S",
       left = "KEY_A",
@@ -250,7 +251,11 @@ RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
             end
           end
         elseif argc[1] == "get" then
-          local val = _G[argc[2]]
+          local val = _G
+          regex = ("([^%s]+)"):format(".")
+          for each in argc[2]:gmatch(regex) do
+            val = val[each]
+          end
           command = command .. "\t\t\t" .. tostring(val)
         end
 

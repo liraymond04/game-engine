@@ -1,5 +1,5 @@
 local input_system = ECS.system({
-    pool = { "velocity", "speed", "animator", "controllable" }
+    pool = { "velocity", "speed", "animator", "player_input", "controllable" }
 })
 
 input_system.priority = 1
@@ -11,7 +11,7 @@ function input_system:update()
         local animator = e.animator.a
         animator.state.moving = false
 
-        local input_map = e.controllable.input_map
+        local input_map = e.player_input.input_map
 
         if IsKeyDown(input_map.up) then
             dir.y = dir.y - e.speed.val
