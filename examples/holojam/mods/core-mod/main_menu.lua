@@ -45,7 +45,12 @@ PLAYER
     :ensure("velocity", 0, 0)
     :give("speed", 4.0)
     :give("box_collider", Vector2.new(40, 55), Vector2.new(30, 45))
-    :give("controllable")
+    :give("controllable", {
+      up = "KEY_W",
+      down = "KEY_S",
+      left = "KEY_A",
+      right = "KEY_D",
+    })
 
 if not BOX then
   BOX = ECS.entity(WORLD)

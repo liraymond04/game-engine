@@ -11,16 +11,18 @@ function input_system:update()
         local animator = e.animator.a
         animator.state.moving = false
 
-        if IsKeyDown("KEY_W") then
+        local input_map = e.controllable.input_map
+
+        if IsKeyDown(input_map.up) then
             dir.y = dir.y - e.speed.val
         end
-        if IsKeyDown("KEY_S") then
+        if IsKeyDown(input_map.down) then
             dir.y = dir.y + e.speed.val
         end
-        if IsKeyDown("KEY_A") then
+        if IsKeyDown(input_map.left) then
             dir.x = dir.x - e.speed.val
         end
-        if IsKeyDown("KEY_D") then
+        if IsKeyDown(input_map.right) then
             dir.x = dir.x + e.speed.val
         end
 
