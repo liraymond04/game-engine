@@ -236,21 +236,21 @@ RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
           table.insert(argc, each)
         end
 
-        if argc[1] == "set" then
+        if argc[1] == "set" and #argc == 3 then
           local val = tonumber(argc[3])
 
           if val then
-            _G[argc[2]] = val
+            load(argc[2] .. " = " .. argc[3])()
           else
             val = argc[3]
             local len = #val
             if val == "true" or val == "false" then
-              _G[argc[2]] = val == "true"
+              load(argc[2] .. " = " .. val)()
             elseif val:sub(1, 1) == '"' and val:sub(len, len) == '"' then
-              _G[argc[2]] = val:sub(2, len - 1)
+              load(argc[2] .. " = " .. val:sub(2, len - 1))()
             end
           end
-        elseif argc[1] == "get" then
+        elseif argc[1] == "get" and #argc == 2 then
           local val = _G
           regex = ("([^%s]+)"):format(".")
           for each in argc[2]:gmatch(regex) do
