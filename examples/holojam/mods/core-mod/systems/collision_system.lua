@@ -5,10 +5,15 @@ local collision_system = ECS.system({
 collision_system.priority = 11
 
 function collision_system:debug_draw()
+    if not CAMERA then
+        return
+    end
     for _, e in ipairs(self.pool) do
         local pos = e.position
         local col = e.box_collider
-        DrawRectangleLines(pos.x + col.offset.x, pos.y + col.offset.y, col.hitbox.x, col.hitbox.y, Color.BLUE)
+        local x = pos.x + col.offset.x - CAMERA.position.x
+        local y = pos.y + col.offset.y - CAMERA.position.y
+        DrawRectangleLines(x, y, col.hitbox.x, col.hitbox.y, Color.BLUE)
     end
 end
 

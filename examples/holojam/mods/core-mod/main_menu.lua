@@ -34,6 +34,15 @@ if not WORLD then
   end
 end
 
+if not CAMERA then
+  CAMERA = ECS.entity(WORLD)
+end
+CAMERA
+    :ensure("position", 0, 0)
+    :ensure("velocity", 0, 0)
+    :give("speed", 2.0)
+    :ensure("follow")
+
 local bg = Color.new(255, 41, 55, 255)
 
 if not PLAYER then
@@ -52,6 +61,7 @@ PLAYER
       left = "KEY_A",
       right = "KEY_D",
     })
+CAMERA.follow.target = PLAYER
 
 if not BOX then
   BOX = ECS.entity(WORLD)
