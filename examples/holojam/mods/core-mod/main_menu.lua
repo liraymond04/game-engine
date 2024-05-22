@@ -81,6 +81,8 @@ MAX_HISTORY = 32
 MAX_INPUT_LENGTH = 256
 
 local debug_console = {
+  window_width = 0,
+  window_height = 0,
   input_buffer = "",
   io_buffer = {},
   history = {},
@@ -205,8 +207,14 @@ RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
         NK.WINDOW_BORDER | NK.WINDOW_MOVABLE | NK.WINDOW_SCALABLE |
         NK.WINDOW_MINIMIZABLE | NK.WINDOW_TITLE)) then
     local line_height = 10
+
+    if debug_console.window_height ~= nk_window_get_height() then
+      local _, scroll_y = nk_group_get_scroll("History")
+      nk_group_set_scroll("History", 0, scroll_y + debug_console.window_height - nk_window_get_height())
+    end
+
     -- Output history
-    nk_layout_row_dynamic(200, 1)
+    nk_layout_row_dynamic(nk_window_get_height() - 80, 1)
     if (nk_group_begin("History", NK.WINDOW_BORDER)) then
       for i = 1, #debug_console.io_buffer do
         nk_layout_row_dynamic(line_height, 1)
@@ -292,6 +300,9 @@ RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
       PLAYER:give("controllable")
       EDIT_ACTIVE = false
     end
+
+    debug_console.window_width = nk_window_get_width()
+    debug_console.window_height = nk_window_get_height()
   end
   nk_end()
 end)

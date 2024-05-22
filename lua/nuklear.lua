@@ -137,6 +137,18 @@ function nk_property_int(name, min, val, max, step, inc_per_pixel) end
 function nk_label(title, align) end
 
 ---
+---Function to get width of current nuklear window
+---@return number Width of window
+---
+function nk_window_get_width() end
+
+---
+---Function to get height of current nuklear window
+---@return number Height of window
+---
+function nk_window_get_height() end
+
+---
 ---Function to get width of current nuklear widget
 ---@return number Width of widget
 ---
@@ -188,6 +200,7 @@ function nk_style_from_table(table) end
 
 function nk_group_begin(name, flags) end
 function nk_group_end() end
-function nk_group_set_scroll(name, buffer, x_offset, y_offset) end
+function nk_group_get_scroll(name) end
+function nk_group_set_scroll(name, x_offset, y_offset) end
 function nk_edit_string_zero_terminated(flags, buffer_table, max) end
 function nk_input_is_key_pressed(key_enum) end

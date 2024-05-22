@@ -51,6 +51,8 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, nk_option_label);
     LUA_REGISTER_FUNCTION(engine->L, nk_property_int);
     LUA_REGISTER_FUNCTION(engine->L, nk_label);
+    LUA_REGISTER_FUNCTION(engine->L, nk_window_get_width);
+    LUA_REGISTER_FUNCTION(engine->L, nk_window_get_height);
     LUA_REGISTER_FUNCTION(engine->L, nk_widget_width);
     LUA_REGISTER_FUNCTION(engine->L, nk_combo_begin_color);
     LUA_REGISTER_FUNCTION(engine->L, nk_combo_end);
@@ -60,6 +62,7 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, nk_style_from_table);
     LUA_REGISTER_FUNCTION(engine->L, nk_group_begin);
     LUA_REGISTER_FUNCTION(engine->L, nk_group_end);
+    LUA_REGISTER_FUNCTION(engine->L, nk_group_get_scroll);
     LUA_REGISTER_FUNCTION(engine->L, nk_group_set_scroll);
     LUA_REGISTER_FUNCTION(engine->L, nk_edit_string_zero_terminated);
     LUA_REGISTER_FUNCTION(engine->L, nk_input_is_key_pressed);
@@ -322,6 +325,22 @@ int _nk_label(lua_State *L) {
     return 0;
 }
 
+int _nk_window_get_width(lua_State *L) {
+    float ret = nk_window_get_width(engine_context->nk_ctx);
+
+    lua_pushnumber(L, ret);
+
+    return 1;
+}
+
+int _nk_window_get_height(lua_State *L) {
+    float ret = nk_window_get_height(engine_context->nk_ctx);
+
+    lua_pushnumber(L, ret);
+
+    return 1;
+}
+
 int _nk_widget_width(lua_State *L) {
     float ret = nk_widget_width(engine_context->nk_ctx);
     lua_pushnumber(L, ret);
@@ -472,6 +491,19 @@ int _nk_group_end(lua_State *L) {
     nk_group_end(engine_context->nk_ctx);
 
     return 0;
+}
+
+int _nk_group_get_scroll(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+    nk_uint x_offset;
+    nk_uint y_offset;
+
+    nk_group_get_scroll(engine_context->nk_ctx, name, &x_offset, &y_offset);
+
+    lua_pushinteger(L, x_offset);
+    lua_pushinteger(L, y_offset);
+
+    return 2;
 }
 
 int _nk_group_set_scroll(lua_State *L) {
