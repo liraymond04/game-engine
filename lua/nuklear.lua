@@ -202,5 +202,7 @@ function nk_group_begin(name, flags) end
 function nk_group_end() end
 function nk_group_get_scroll(name) end
 function nk_group_set_scroll(name, x_offset, y_offset) end
+function nk_edit_get_cursor() end
+function nk_edit_set_cursor(cursor) end
 function nk_edit_string_zero_terminated(flags, buffer_table, max) end
 function nk_input_is_key_pressed(key_enum) end

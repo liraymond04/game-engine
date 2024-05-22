@@ -64,6 +64,8 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, nk_group_end);
     LUA_REGISTER_FUNCTION(engine->L, nk_group_get_scroll);
     LUA_REGISTER_FUNCTION(engine->L, nk_group_set_scroll);
+    LUA_REGISTER_FUNCTION(engine->L, nk_edit_get_cursor);
+    LUA_REGISTER_FUNCTION(engine->L, nk_edit_set_cursor);
     LUA_REGISTER_FUNCTION(engine->L, nk_edit_string_zero_terminated);
     LUA_REGISTER_FUNCTION(engine->L, nk_input_is_key_pressed);
 
@@ -512,6 +514,22 @@ int _nk_group_set_scroll(lua_State *L) {
     int y_offset = luaL_checkinteger(L, 3);
 
     nk_group_set_scroll(engine_context->nk_ctx, name, x_offset, y_offset);
+
+    return 0;
+}
+
+int _nk_edit_get_cursor(lua_State *L) {
+    int ret = engine_context->nk_ctx->text_edit.cursor;
+
+    lua_pushinteger(L, ret);
+
+    return 1;
+}
+
+int _nk_edit_set_cursor(lua_State *L) {
+    int cursor = luaL_checkinteger(L, 1);
+
+    engine_context->nk_ctx->current->edit.cursor = cursor;
 
     return 0;
 }

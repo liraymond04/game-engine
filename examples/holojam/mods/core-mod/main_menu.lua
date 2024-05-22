@@ -237,6 +237,7 @@ RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
         if debug_console.current_command + 1 <= debug_console.history_count then
           debug_console.current_command = debug_console.current_command + 1
           debug_console.input_buffer = debug_console.history[debug_console.current_command]
+          nk_edit_set_cursor(debug_console.input_buffer:len())
         elseif debug_console.current_command + 1 == debug_console.history_count + 1 then
           debug_console.current_command = debug_console.current_command + 1
           debug_console.input_buffer = ""
@@ -248,6 +249,7 @@ RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
           debug_console.current_command = debug_console.current_command - 1
           debug_console.input_buffer = debug_console.history[count]
         end
+        nk_edit_set_cursor(debug_console.input_buffer:len())
       end
       if (nk_input_is_key_pressed(NK.KEY_ENTER)) then
         local argc = {}
