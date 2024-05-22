@@ -82,6 +82,7 @@ MAX_INPUT_LENGTH = 256
 
 local debug_console = {
   input_buffer = "",
+  io_buffer = {},
   history = {},
   history_count = 0,
   current_command = 0,
@@ -203,15 +204,16 @@ RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
   if (nk_begin("Console", nk_rect.new(50, 50, 400, 300),
         NK.WINDOW_BORDER | NK.WINDOW_MOVABLE | NK.WINDOW_SCALABLE |
         NK.WINDOW_MINIMIZABLE | NK.WINDOW_TITLE)) then
+    local line_height = 10
     -- Output history
     nk_layout_row_dynamic(200, 1)
     if (nk_group_begin("History", NK.WINDOW_BORDER)) then
-      for i = 1, debug_console.history_count do
-        nk_layout_row_dynamic(20, 1)
-        nk_label("> " .. debug_console.history[i], NK.TEXT_LEFT)
+      for i = 1, #debug_console.io_buffer do
+        nk_layout_row_dynamic(line_height, 1)
+        nk_label(debug_console.io_buffer[i], NK.TEXT_LEFT)
       end
       if (debug_console.scroll_to_bottom) then
-        nk_group_set_scroll("History", 0, debug_console.history_count * 20)
+        nk_group_set_scroll("History", 0, #debug_console.io_buffer * line_height)
         debug_console.scroll_to_bottom = false
       end
     end
@@ -246,6 +248,8 @@ RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
           table.insert(argc, each)
         end
 
+        table.insert(debug_console.io_buffer, "> " .. command)
+
         if argc[1] == "set" and #argc == 3 then
           local val = tonumber(argc[3])
 
@@ -266,7 +270,9 @@ RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
           for each in argc[2]:gmatch(regex) do
             val = val[each]
           end
-          command = command .. "\t\t\t" .. tostring(val)
+          table.insert(debug_console.io_buffer, tostring(val))
+        else
+          table.insert(debug_console.io_buffer, '"' .. argc[1] .. '"' .. " command not found")
         end
 
         debug_console.history[(debug_console.history_count % MAX_HISTORY) + 1] = command
