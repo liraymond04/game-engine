@@ -29,13 +29,34 @@ function Utils.isFile(path)
 end
 
 function Utils.listDirectory(path)
-    local p = io.popen('ls "' .. path .. '"')
-    local files = {}
-    for file in p:lines() do
-        table.insert(files, file)
+    if not EMSCRIPTEN then
+        local p = io.popen('ls "' .. path .. '"')
+
+        if not p then
+            return
+        end
+
+        local files = {}
+        for file in p:lines() do
+            table.insert(files, file)
+        end
+
+        p:close()
+        return files
+    else
+        local p = EMSCRIPTEN_readdir(path)
+
+        if not p then
+            return
+        end
+
+        local files = {}
+        for _, file in ipairs(p) do
+            table.insert(files, file)
+        end
+
+        return files
     end
-    p:close()
-    return files
 end
 
 ---TODO
@@ -45,6 +66,10 @@ function Utils.loadNamespace(pathOrFiles, namespace)
 
     if type(pathOrFiles) == "string" then
         local files = Utils.listDirectory(pathOrFiles)
+
+        if not files then
+            return
+        end
 
         for _, file in ipairs(files) do
             local filePath = pathOrFiles .. "/" .. file

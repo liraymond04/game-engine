@@ -89,6 +89,7 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, audio_group_remove_sound);
     LUA_REGISTER_FUNCTION(engine->L, audio_group_get_volume);
     LUA_REGISTER_FUNCTION(engine->L, audio_group_set_volume);
+    LUA_REGISTER_FUNCTION(engine->L, EMSCRIPTEN_readdir);
 }
 
 int _GetFrameTime(lua_State *L) {
@@ -780,6 +781,35 @@ int _audio_group_set_volume(lua_State *L) {
     return 0;
 }
 
+int _EMSCRIPTEN_readdir(lua_State *L) {
+    const char *path = luaL_checkstring(L, 1);
+#ifdef __EMSCRIPTEN__
+    DIR *dir = opendir(path);
+    if (dir == NULL) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    struct dirent *entry;
+    lua_newtable(L);
+    int i = 1;
+
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type == DT_REG || entry->d_type == DT_DIR) {
+            lua_pushstring(L, entry->d_name);
+            lua_rawseti(L, -2, i++);
+        }
+    }
+
+    closedir(dir);
+    return 1;
+#else
+    lua_pushnil(L);
+    return 1;
+#endif
+}
+
+
 static Texture2D luaL_checktexture2d(lua_State *L, int arg) {
     luaL_checktype(L, arg, LUA_TTABLE);
     lua_getfield(L, arg, "id");
@@ -1158,4 +1188,9 @@ void map_enums(lua_State *L) {
     lua_setfield(L, -2, "EDIT_COMMITED");
 
     lua_setglobal(L, "NK");
+
+#ifdef __EMSCRIPTEN__
+    lua_pushboolean(L, true);
+    lua_setglobal(L, "EMSCRIPTEN");
+#endif
 }

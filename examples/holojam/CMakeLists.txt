@@ -23,15 +23,55 @@ set(LUA_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../lua")
 # Send runtime-loaded files to virtual FS
 set(EXAMPLE_DIR "${CMAKE_SOURCE_DIR}/examples/${PROJECT_NAME}")
 set(PRELOAD_FOLDERS
-    "${EXAMPLE_DIR}/mods@/mods"
-    "${EXAMPLE_DIR}/scenes/bin@/scenes/bin"
-    "${LUA_PATH}@/bin"
+    "${EXAMPLE_DIR}/mods"
+    "${EXAMPLE_DIR}/scenes/bin"
+    "${LUA_PATH}"
+)
+set(PRELOAD_DEST
+    "/mods"
+    "/scenes/bin"
+    "/bin"
+)
+
+set(PRELOAD_FILES
+    "${EXAMPLE_DIR}/out.rres"
+    "${EXAMPLE_DIR}/out.rres.json"
+)
+set(PRELOAD_FILES_DEST
+    "/out.rres"
+    "/out.rres.json"
 )
 
 # Convert list to string arguments
-foreach(folder ${PRELOAD_FOLDERS})
-    list(APPEND PRELOAD "--preload-file ${folder}")
+list(LENGTH PRELOAD_FOLDERS PRELOAD_FOLDERS_LENGTH)
+math(EXPR LAST_INDEX "${PRELOAD_FOLDERS_LENGTH} - 1")
+foreach(index RANGE 0 ${LAST_INDEX})
+    list(GET PRELOAD_FOLDERS ${index} folder)
+    list(GET PRELOAD_DEST ${index} dest)
+
+    set(combined_path "${folder}@${dest}")
+
+    list(APPEND PRELOAD "--preload-file ${combined_path}")
+
+    file(GLOB_RECURSE FILES_IN_DIRECTORY "${folder}/*")
+    foreach(FILE_PATH ${FILES_IN_DIRECTORY})
+        set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY LINK_DEPENDS ${FILE_PATH})
+    endforeach()
 endforeach()
+
+list(LENGTH PRELOAD_FILES PRELOAD_FILES_LENGTH)
+math(EXPR LAST_INDEX "${PRELOAD_FILES_LENGTH} - 1")
+foreach(index RANGE 0 ${LAST_INDEX})
+    list(GET PRELOAD_FILES ${index} file)
+    list(GET PRELOAD_FILES_DEST ${index} dest)
+
+    set(combined_path "${file}@${dest}")
+
+    list(APPEND PRELOAD "--preload-file ${combined_path}")
+
+    set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY LINK_DEPENDS ${file})
+endforeach()
+
 string(REPLACE ";" " " PRELOAD "${PRELOAD}")
 
 # Web Configurations

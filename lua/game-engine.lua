@@ -150,3 +150,11 @@ function audio_group_get_volume(group) end
 ---@param volume number Value from 0 to 1.
 ---
 function audio_group_set_volume(group, volume) end
+
+---
+---Emscripten function to return all files and folders in a directory
+---@param path string Path to directory to read
+---
+function EMSCRIPTEN_readdir(path) end
+
+EMSCRIPTEN = false

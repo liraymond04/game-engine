@@ -30,7 +30,10 @@ endif()
 
 # utils
 if(BUILD_UTILS)
-    add_subdirectory(utils)
+    if ("${PLATFORM}" STREQUAL "Web")
+    else()
+        add_subdirectory(utils)
+    endif()
 endif()
 
 # add engine headers to global include
