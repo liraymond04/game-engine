@@ -116,7 +116,7 @@ void Engine_InitLua(Engine_t *engine) {
     luaL_openlibs(engine->L);
 
     // Run metatable definitions
-    luaL_dofile(engine->L, "./bin/include.lua");
+    luaL_dofile(engine->L, LUA_PATH "include.lua");
 
     // C function bindings
     lua_pushcfunction(engine->L, RegisterFunction);
@@ -232,7 +232,7 @@ bool LoadModsRecurse(Engine_t *engine, const char *mods_dir,
 }
 
 void Engine_LoadMods(Engine_t *engine) {
-    const char *mods_dir = "mods";
+    const char *mods_dir = MOD_PATH;
 
     DIR *dir;
     struct dirent *ent;

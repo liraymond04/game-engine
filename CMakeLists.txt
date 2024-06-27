@@ -1,6 +1,15 @@
 cmake_minimum_required(VERSION 3.11) # FetchContent is available in 3.11+
 project(main)
 
+# Set directories
+set(PROJECT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
+set(RELEASE_ROOT_DIR "${PROJECT_ROOT}/release")
+if ("${PLATFORM}" STREQUAL "Web")
+    set(RELEASE_ROOT_DIR "${PROJECT_ROOT}/release-web")
+elseif(WIN32)
+    set(RELEASE_ROOT_DIR "${PROJECT_ROOT}/release-windows")
+endif()
+
 # Generate compile_commands.json
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

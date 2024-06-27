@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 3.12)
 project(holojam)
 
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set(RELEASE_DIR "${RELEASE_ROOT_DIR}/${PROJECT_NAME}")
+set(RELEASE_EXECUTABLE_DIR "${RELEASE_DIR}")
+set(RELEASE_SCENE_DIR "${RELEASE_DIR}/scenes")
+set(RELEASE_MOD_DIR "${RELEASE_DIR}/mods")
+set(RELEASE_LUA_DIR "${RELEASE_DIR}/lua")
+set(RELEASE_RES_DIR "${RELEASE_DIR}")
 
 file(GLOB SRC_FILES ${SRC_DIR}/*.c)
 
@@ -18,7 +24,16 @@ endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Get the path to /project-root/lua
-set(LUA_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../lua")
+set(LUA_PATH "${PROJECT_ROOT}/lua")
+
+# set build paths
+if(BUILD_PATHS)
+    target_compile_definitions(engine PRIVATE BUILD_PATHS=ON)
+    target_compile_definitions(engine PRIVATE RRES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/")
+    target_compile_definitions(engine PRIVATE SCENE_PATH="${CMAKE_CURRENT_SOURCE_DIR}/scenes/bin/")
+    target_compile_definitions(engine PRIVATE MOD_PATH="${CMAKE_CURRENT_SOURCE_DIR}/mods/")
+    target_compile_definitions(engine PRIVATE LUA_PATH="./lua/")
+endif()
 
 # Send runtime-loaded files to virtual FS
 set(EXAMPLE_DIR "${CMAKE_SOURCE_DIR}/examples/${PROJECT_NAME}")
@@ -92,4 +107,51 @@ if (EMSCRIPTEN)
 else()
     # build scenes
     add_subdirectory(scenes)
+endif()
+
+set(EXEC_EXT "")
+
+if (WIN32)
+    set(EXEC_EXT ".exe")
+endif()
+
+if(NOT BUILD_PATHS)
+    # Copy game executable to release directory
+    file(MAKE_DIRECTORY ${RELEASE_EXECUTABLE_DIR})
+    set(FILE_NAME ${PROJECT_NAME}${EXEC_EXT})
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_CURRENT_BINARY_DIR}/${FILE_NAME}
+        ${RELEASE_EXECUTABLE_DIR}/${FILE_NAME}
+    )
+
+    # Copy mods folder to release directory
+    file(MAKE_DIRECTORY ${RELEASE_MOD_DIR})
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/mods
+        ${RELEASE_MOD_DIR}
+    )
+
+    # Copy lua folder to release directory
+    file(MAKE_DIRECTORY ${RELEASE_LUA_DIR})
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${PROJECT_ROOT}/lua
+        ${RELEASE_LUA_DIR}
+    )
+
+    # Copy resource files to release directory
+    file(MAKE_DIRECTORY ${RELEASE_RES_DIR})
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_CURRENT_SOURCE_DIR}/out.rres
+        ${RELEASE_RES_DIR}/out.rres
+    )
+    file(MAKE_DIRECTORY ${RELEASE_RES_DIR})
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_CURRENT_SOURCE_DIR}/out.rres.json
+        ${RELEASE_RES_DIR}/out.rres.json
+    )
 endif()

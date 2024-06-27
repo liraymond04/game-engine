@@ -7,7 +7,7 @@ int main() {
     Engine_InitRRESFile(&engine, "out.rres");
     Engine_Init(&engine, 700, 394, 2, "Holojam");
 
-    Engine_Mod_Scene_Load(&engine, "scenes/bin/libmod_scene", "MAIN_MENU");
+    Engine_Mod_Scene_Load(&engine, "mod_scene", "MAIN_MENU");
     engine.current_scene->interface.Init(&engine);
 
     Engine_Run(&engine);

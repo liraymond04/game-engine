@@ -24,7 +24,7 @@ void Engine_Scene_Load(Engine_t *engine, const char *scene_path) {
     scene->interface.Cleanup = Cleanup;
 #else
     char full_scene_path[PATH_MAX];
-    snprintf(full_scene_path, sizeof(full_scene_path), "%s.%s", scene_path,
+    snprintf(full_scene_path, sizeof(full_scene_path), SCENE_PATH "lib%s.%s", scene_path,
              DLL_EXTENSION);
 
     scene->library_handle = platform_load_library(full_scene_path);

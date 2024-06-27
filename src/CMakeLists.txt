@@ -6,6 +6,14 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # Dependencies
 include(FetchContent)
 
+set(BUILD_PATHS)
+
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLUA_USE_POSIX -DLUA_USE_DLOPEN")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DLUA_USE_POSIX -DLUA_USE_DLOPEN")
+endif()
+
 # Function to fetch and build an external project
 function(fetch_and_build_project TARGET_NAME URL)
     FetchContent_Declare(
@@ -48,6 +56,7 @@ file(GLOB_RECURSE SRC_FILES "${SRC_DIR}/engine/*.c")
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
 target_link_libraries(${PROJECT_NAME} raylib -lm lua_static json-c)
+target_compile_options(${PROJECT_NAME} PUBLIC -Wno-deprecated-declarations)
 
 # Checks if OSX and links appropriate frameworks (Only required on MacOS)
 if (APPLE)

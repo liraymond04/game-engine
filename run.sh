@@ -2,19 +2,21 @@
 
 # Default value for the project type flag
 project_type=""
+run_release=false
 
 # Parse command-line arguments
-while getopts ":t:" opt; do
+while getopts ":t-:" opt; do
   case $opt in
     t)
       project_type="$OPTARG"
       ;;
-    \?)
+    -)
+      case "${OPTARG}" in
+        release) run_release=true ;;
+        *) exit 1 ;;
+      esac;;
+    *)
       echo "Invalid option: -$OPTARG" >&2
-      exit 1
-      ;;
-    :)
-      echo "Option -$OPTARG requires an argument." >&2
       exit 1
       ;;
   esac
@@ -85,25 +87,25 @@ if [ ! -d "$running_directory" ]; then
     exit 1
 fi
 
-# Create symbolic links to Lua definitions in the running directory
-output_directory="$running_directory/bin"
-[ ! -d "$output_directory" ] && mkdir -p "$output_directory"
-for item in "$root_directory/lua"/*; do
-    name=$(basename -- "$item")
-    if ! [ -e "$output_directory/$name" ]; then
-        ln -s "$item" "$output_directory/$name"
-    fi
-done
+# # Create symbolic links to Lua definitions in the running directory
+# output_directory="$running_directory/bin"
+# [ ! -d "$output_directory" ] && mkdir -p "$output_directory"
+# for item in "$root_directory/lua"/*; do
+#     name=$(basename -- "$item")
+#     if ! [ -e "$output_directory/$name" ]; then
+#         ln -s "$item" "$output_directory/$name"
+#     fi
+# done
 
 # Copy engine DLL to running directory
-if [ "$project_type" == "windows" ]; then
-    cp "$build_directory/src/engine.dll" "$running_directory"
-fi
+# if [ "$project_type" == "windows" ]; then
+#     cp "$build_directory/src/engine.dll" "$running_directory"
+# fi
 
-cd $running_directory
+# cd $running_directory
 
 # Run the executable
 echo "Running $example_project..."
 "$executable"
 
-cd $root_directory
+# cd $root_directory

@@ -62,10 +62,12 @@ void Engine_ResourceGroup_Clear(Engine_t *engine, int group) {
 }
 
 void Engine_InitRRESFile(Engine_t *engine, const char *rres_file_path) {
-    strcpy(engine->rres_file, rres_file_path);
+    char rres_file_path_full[PATH_MAX];
+    sprintf(rres_file_path_full, RRES_PATH "%s", rres_file_path);
+    strcpy(engine->rres_file, rres_file_path_full);
     // Read data JSON
     char json_file[PATH_MAX];
-    sprintf(json_file, "%s.json", engine->rres_file);
+    sprintf(json_file, RRES_PATH "%s.json", rres_file_path);
     engine->rres_info = json_object_from_file(json_file);
 }
 

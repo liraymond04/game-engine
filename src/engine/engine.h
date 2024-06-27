@@ -29,6 +29,13 @@
 #define PATH_MAX 4096
 #endif
 
+#ifndef BUILD_PATHS
+#define RRES_PATH "./"
+#define SCENE_PATH "./scenes/"
+#define MOD_PATH "./mods/"
+#define LUA_PATH "./lua/"
+#endif
+
 typedef struct Engine {
     struct ZSortedHashTable *hooks;
     lua_State *L;
