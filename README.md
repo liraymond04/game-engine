@@ -22,7 +22,7 @@ Features:
 The prerequisite packages for building are:
 
 ```bash
-sudo pacman -S --needed git gcc cmake ninja
+sudo pacman -S --needed git gcc cmake ninja luarocks
 ```
 
 ```bash

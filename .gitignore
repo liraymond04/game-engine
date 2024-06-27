@@ -3,4 +3,5 @@ build/
 build-windows/
 build-web/
 bin/
+lua/lua_modules
 *.dll

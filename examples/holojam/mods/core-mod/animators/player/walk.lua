@@ -1,4 +1,4 @@
-local walk_anim = Anim.new({1}, 8, 1, 10)
+local walk_anim = Anim.new("walk", {1}, 8, 1, 10)
 
 print("walk_anim")
 

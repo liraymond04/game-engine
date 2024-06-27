@@ -1,4 +1,4 @@
-local idle_anim = Anim.new({1}, 6, 1, 10)
+local idle_anim = Anim.new("idle", {1}, 6, 1, 10)
 
 print("idle_anim")
 

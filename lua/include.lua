@@ -10,6 +10,11 @@ end
 
 package.path = package.path .. ";" .. cwd() .. "?/init.lua"
 package.path = package.path .. ";" .. cwd() .. "?.lua"
+package.path = package.path .. ";" .. "/" .. "?.lua"
+package.cpath = package.cpath .. ";" .. cwd() .. "lua_modules/lib/lua/5.4/?.so"
+package.cpath = package.cpath .. ";" .. cwd() .. "lua_modules/lib/lua/5.4/?.dll"
+
+require('import')
 
 -- Includes
 require("game-engine")

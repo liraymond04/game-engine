@@ -1,6 +1,8 @@
 --- Utils
 -- Helper module for misc operations
 
+local lfs = require('lfs')
+
 local Utils = {}
 
 function Utils.error(level, str, ...)
@@ -11,21 +13,16 @@ end
 -- @param orig Table to copy
 -- @param target Table to append to
 function Utils.shallowCopy(orig, target)
-   for key, value in pairs(orig) do
-      target[key] = value
-   end
+    for key, value in pairs(orig) do
+        target[key] = value
+    end
 
-   return target
+    return target
 end
 
 function Utils.isFile(path)
-    local f = io.open(path, "r")
-    if f then
-        local _, err = f:read(1)
-        f:close()
-        return err == nil
-    end
-    return false
+    local attr = lfs.attributes(path)
+    return attr and attr.mode == "file"
 end
 
 function Utils.listDirectory(path)
@@ -39,6 +36,16 @@ function Utils.listDirectory(path)
         local files = {}
         for file in p:lines() do
             table.insert(files, file)
+        end
+
+        for entry in lfs.dir(path) do
+            if entry ~= "." and entry ~= ".." then
+                local full_path = path .. "/" .. entry
+                local attr = lfs.attributes(full_path)
+                if attr.mode == "file" then
+                    table.insert(files, entry)
+                end
+            end
         end
 
         p:close()
@@ -85,7 +92,10 @@ function Utils.loadNamespace(pathOrFiles, namespace)
     elseif type(pathOrFiles) == "table" then
         for _, path in ipairs(pathOrFiles) do
             if type(path) ~= "string" then
-                error(string.format("bad argument #2 to 'loadNamespace' (string/table of strings expected, got table containing %s)", type(path)), 2)
+                error(
+                string.format(
+                "bad argument #2 to 'loadNamespace' (string/table of strings expected, got table containing %s)",
+                    type(path)), 2)
             end
 
             local name = path
@@ -102,6 +112,5 @@ function Utils.loadNamespace(pathOrFiles, namespace)
 
     return namespace
 end
-
 
 return Utils

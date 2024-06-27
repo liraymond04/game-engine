@@ -49,7 +49,7 @@ if not PLAYER then
   PLAYER = ECS.entity(WORLD)
 end
 PLAYER
-    :ensure("animator", Animator.load("animators/player", cwd))
+    :ensure("animator", import("animators/player"):Init())
     :ensure("position", 20, 20)
     :ensure("velocity", 0, 0)
     :give("speed", 4.0)
@@ -71,8 +71,8 @@ BOX
     :give("box_draw", 50, 50, Color.RED)
     :give("box_collider", Vector2.new(50, 50), Vector2.zero)
 
-local STYLE_BLUE = dofile(cwd() .. "styles/blue.lua")
-local STYLE_RED = dofile(cwd() .. "styles/red.lua")
+local STYLE_BLUE = import("styles/blue")
+local STYLE_RED = import("styles/red")
 
 local test_text = Engine_LoadResource("assets/test.txt", 0)
 print(test_text)

@@ -3,6 +3,7 @@
 ---
 ---Anim class represents an animation definition with frames and transition conditions
 ---@class Anim
+---@field name string Name of animator object
 ---@field animator Animator Reference to parent animator object
 ---@field Before function Function that runs before every frame tick
 ---@field After function Function that runs after every frame tick
@@ -23,14 +24,16 @@ Anim.__index = Anim
 
 ---
 ---Constructor function to create a new Animator object
+---@param name string Name of animator object
 ---@param frame_resources integer[] Array of resources used
 ---@param total_frames integer Total number of frames in animation
 ---@param initial_frame integer Initial frame of animation
 ---@param frames_per_second integer Rate that animation changes frames
 ---@return Anim
 ---
-function Anim.new(frame_resources, total_frames, initial_frame, frames_per_second)
+function Anim.new(name, frame_resources, total_frames, initial_frame, frames_per_second)
     local self = setmetatable({}, Anim)
+    self.name = name
     self.frame_resources = frame_resources
     self.total_frames = total_frames
     self.current_frame = initial_frame
@@ -141,18 +144,6 @@ function Animator.new(name)
 end
 
 ---
----Load animator object from a directory
----@param path string Path to directory with animator definition
----@param cwd function Function for getting current working directory of the current file
----@return Animator
----
-function Animator.load(path, cwd)
-    local animator = dofile(cwd() .. path .. "/init.lua")
-    animator:Init()
-    return animator
-end
-
----
 ---Load resource file from a rres resource path (the rres file should be loaded by engine already)
 ---@param path string rres resource path
 ---@param group? audio_group_t Audio group to add sound resource to optionally
@@ -171,12 +162,11 @@ end
 
 ---
 ---Load Anim object from a directory
----@param path string Path to directory with Anim definition
----@param cwd function Function for getting current working directory of the current file
+---@param anim Anim Path to directory with Anim definition
 ---
-function Animator:LoadAnim(path, cwd)
-    self.anims[path] = dofile(cwd() .. path .. ".lua")
-    self.anims[path].animator = self
+function Animator:LoadAnim(anim)
+    self.anims[anim.name] = anim
+    self.anims[anim.name].animator = self
 end
 
 ---
