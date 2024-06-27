@@ -51,7 +51,7 @@ Build by passing in a new target flag to the build script
 ```
 
 And run the web build with the run script
-```
+```bash
 ./run.sh -t web holojam
 ```
 
@@ -98,12 +98,31 @@ Build by passing in a new target flag to the build script
 
 And run the windows build with the run script
 
-```
+```bash
 ./run.sh -t windows holojam
 ```
 
 > [!WARNING]  
 > Currently, the `test-game` project only builds and runs properly on POSIX systems, due to the global symbol table not being shared with functions from shared libraries in Windows
+
+## Building for release
+
+Releases builds are done in a special release directory and the specified release files are copied into the `release[-<project-type>]` directory
+
+```bash
+# build files are located in build-release/ and releases are copied to release/
+./build.sh --release
+```
+
+```bash
+# build files are located in build-windows-release/ and releases are copied to release-windows/
+./build.sh -t windows --release
+```
+
+Release builds are meant to be the final version of your software that is shipped, so make sure all paths are valid when running from the right directory and remember to include all relevant asset files
+
+> [!NOTE]
+> The `release` directory has its file structure determined by a project's CMake config. This is typically done by copying specific files and directories to specific locations with post-build custom commands and CMake variables. Refer to the `holojam` project's CMake files for an example of how its release is configured.
 
 ## Libraries
 
@@ -116,3 +135,4 @@ And run the windows build with the run script
 - https://github.com/walterschell/Lua CMake based build of Lua
 - https://github.com/emscripten-core/emscripten LLVM-to-WASM compiler
 - https://github.com/Keyslam-Group/Concord Feature compute Lua ECS
+- https://github.com/yogeshlonkar/lua-import Relative imports for Lua
