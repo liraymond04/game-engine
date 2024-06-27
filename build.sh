@@ -8,14 +8,13 @@ build_release=false
 
 build_dir='build'
 
-# install luarocks modules
-luarocks install --tree=lua/lua_modules --only-deps game-engine-1.0.0-1.rockspec
+rocks_pref=''
 
 # cmake build
 while getopts 'dt:-:' flag; do
   case "${flag}" in
     t) target_flag="$OPTARG" ;;
-    d) debug_flag='-DCMAKE_BUILD_TYPE=Debug' ;;
+    d) debug_flag='-DCMAKE_BUILD_TYPE=Debug'; ;;
     -)
       case "${OPTARG}" in
         no-examples) build_examples=false ;;
@@ -31,9 +30,13 @@ echo $debug_flag
 
 if [[ $target_flag == "web" ]]; then
   build_dir+="-web"
+  rocks_pref='emmake'
 elif [[ $target_flag == "windows" ]]; then
   build_dir+="-windows"
 fi
+
+# install luarocks modules
+$rocks_pref luarocks install --tree=lua/lua_modules --only-deps game-engine-1.0.0-1.rockspec
 
 cmake_flags=("$debug_flag")
 if ! $build_examples; then

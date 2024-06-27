@@ -27,7 +27,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(LUA_PATH "${PROJECT_ROOT}/lua")
 
 # set build paths
-if(BUILD_PATHS)
+if(BUILD_PATHS AND NOT EMSCRIPTEN)
     target_compile_definitions(engine PRIVATE BUILD_PATHS=ON)
     target_compile_definitions(engine PRIVATE RRES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/")
     target_compile_definitions(engine PRIVATE SCENE_PATH="${CMAKE_CURRENT_SOURCE_DIR}/scenes/bin/")
@@ -35,62 +35,80 @@ if(BUILD_PATHS)
     target_compile_definitions(engine PRIVATE LUA_PATH="./lua/")
 endif()
 
+if (EMSCRIPTEN)
+    # set emscripten build paths
+    target_compile_definitions(engine PRIVATE BUILD_PATHS=ON)
+    target_compile_definitions(engine PRIVATE RRES_PATH="/")
+    target_compile_definitions(engine PRIVATE SCENE_PATH="/scenes/")
+    target_compile_definitions(engine PRIVATE MOD_PATH="/mods/")
+    target_compile_definitions(engine PRIVATE LUA_PATH="/lua/")
+
+    # Compile and link dynamic library for mod scene
+    add_library(web_scene SHARED "scenes/mod_scene/mod_scene.c")
+    set_target_properties(web_scene PROPERTIES SUFFIX ".wasm")
+    target_link_libraries(web_scene PRIVATE raylib engine)
+    target_link_libraries(${PROJECT_NAME} PRIVATE web_scene)
+endif()
+
 # Send runtime-loaded files to virtual FS
 set(EXAMPLE_DIR "${CMAKE_SOURCE_DIR}/examples/${PROJECT_NAME}")
+set(EXAMPLE_BUILD_DIR "${CMAKE_BINARY_DIR}/examples/${PROJECT_NAME}")
 set(PRELOAD_FOLDERS
     "${EXAMPLE_DIR}/mods"
-    "${EXAMPLE_DIR}/scenes/bin"
+    # "${EXAMPLE_DIR}/scenes/bin"
     "${LUA_PATH}"
 )
 set(PRELOAD_DEST
     "/mods"
-    "/scenes/bin"
-    "/bin"
+    # "/scenes/bin"
+    "/lua"
 )
 
 set(PRELOAD_FILES
+    "${EXAMPLE_BUILD_DIR}/libweb_scene.wasm"
     "${EXAMPLE_DIR}/out.rres"
     "${EXAMPLE_DIR}/out.rres.json"
 )
 set(PRELOAD_FILES_DEST
+    "/scenes/libmod_scene.wasm"
     "/out.rres"
     "/out.rres.json"
 )
 
-# Convert list to string arguments
-list(LENGTH PRELOAD_FOLDERS PRELOAD_FOLDERS_LENGTH)
-math(EXPR LAST_INDEX "${PRELOAD_FOLDERS_LENGTH} - 1")
-foreach(index RANGE 0 ${LAST_INDEX})
-    list(GET PRELOAD_FOLDERS ${index} folder)
-    list(GET PRELOAD_DEST ${index} dest)
-
-    set(combined_path "${folder}@${dest}")
-
-    list(APPEND PRELOAD "--preload-file ${combined_path}")
-
-    file(GLOB_RECURSE FILES_IN_DIRECTORY "${folder}/*")
-    foreach(FILE_PATH ${FILES_IN_DIRECTORY})
-        set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY LINK_DEPENDS ${FILE_PATH})
-    endforeach()
-endforeach()
-
-list(LENGTH PRELOAD_FILES PRELOAD_FILES_LENGTH)
-math(EXPR LAST_INDEX "${PRELOAD_FILES_LENGTH} - 1")
-foreach(index RANGE 0 ${LAST_INDEX})
-    list(GET PRELOAD_FILES ${index} file)
-    list(GET PRELOAD_FILES_DEST ${index} dest)
-
-    set(combined_path "${file}@${dest}")
-
-    list(APPEND PRELOAD "--preload-file ${combined_path}")
-
-    set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY LINK_DEPENDS ${file})
-endforeach()
-
-string(REPLACE ";" " " PRELOAD "${PRELOAD}")
-
 # Web Configurations
 if (EMSCRIPTEN)
+    # Convert list to string arguments
+    list(LENGTH PRELOAD_FOLDERS PRELOAD_FOLDERS_LENGTH)
+    math(EXPR LAST_INDEX "${PRELOAD_FOLDERS_LENGTH} - 1")
+    foreach(index RANGE 0 ${LAST_INDEX})
+        list(GET PRELOAD_FOLDERS ${index} folder)
+        list(GET PRELOAD_DEST ${index} dest)
+
+        set(combined_path "${folder}@${dest}")
+
+        list(APPEND PRELOAD "--preload-file ${combined_path}")
+
+        file(GLOB_RECURSE FILES_IN_DIRECTORY "${folder}/*")
+        foreach(FILE_PATH ${FILES_IN_DIRECTORY})
+            set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY LINK_DEPENDS ${FILE_PATH})
+        endforeach()
+    endforeach()
+
+    list(LENGTH PRELOAD_FILES PRELOAD_FILES_LENGTH)
+    math(EXPR LAST_INDEX "${PRELOAD_FILES_LENGTH} - 1")
+    foreach(index RANGE 0 ${LAST_INDEX})
+        list(GET PRELOAD_FILES ${index} file)
+        list(GET PRELOAD_FILES_DEST ${index} dest)
+
+        set(combined_path "${file}@${dest}")
+
+        list(APPEND PRELOAD "--preload-file ${combined_path}")
+
+        set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY LINK_DEPENDS ${file})
+    endforeach()
+
+    string(REPLACE ";" " " PRELOAD "${PRELOAD}")
+
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY -s GL_ENABLE_GET_PROC_ADDRESS=1")
     # Since WASM is used, ALLOW_MEMORY_GROWTH has no extra overheads
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s ALLOW_MEMORY_GROWTH=1 --no-heap-copy")
@@ -100,10 +118,6 @@ if (EMSCRIPTEN)
         LINK_FLAGS "-sMAIN_MODULE=2 ${PRELOAD}"
         SUFFIX ".html"
     )
-    # Compile and link dynamic library for mod scene
-    add_library(web_scene SHARED "scenes/mod_scene/mod_scene.c")
-    target_link_libraries(web_scene PRIVATE raylib engine)
-    target_link_libraries(${PROJECT_NAME} PRIVATE web_scene)
 else()
     # build scenes
     add_subdirectory(scenes)
