@@ -7,6 +7,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 include(FetchContent)
 
 set(BUILD_PATHS)
+set(RELEASE_ENGINE_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}" PARENT_SCOPE)
 
 if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
 else()
@@ -56,7 +57,9 @@ file(GLOB_RECURSE SRC_FILES "${SRC_DIR}/engine/*.c")
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
 target_link_libraries(${PROJECT_NAME} raylib -lm lua_static json-c)
-target_compile_options(${PROJECT_NAME} PUBLIC -Wno-deprecated-declarations)
+if (NOT WIN32)
+    target_compile_options(${PROJECT_NAME} PUBLIC -Wno-deprecated-declarations)
+endif()
 
 # Checks if OSX and links appropriate frameworks (Only required on MacOS)
 if (APPLE)

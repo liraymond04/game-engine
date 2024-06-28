@@ -1,14 +1,15 @@
 -- modified from the following repository
 -- https://github.com/yogeshlonkar/lua-import
 
-local import_lua_dir = debug.getinfo(1, 'S').source:sub(2):match('(.*)' .. (...):gsub('%.', '/') .. '.lua')
+local lfs = require("lfs")
+
+local import_lua_dir = LUA_PATH or debug.getinfo(1, 'S').source:sub(2):match('(.*)' .. (...):gsub('%.', '/') .. '.lua')
 
 ---Function to check if a path is a directory
 --
 ---@param path string to be checked
 ---@return boolean
 local function is_directory(path)
-  local lfs = require("lfs")  -- Requires LuaFileSystem library
   local attr = lfs.attributes(path)
   return attr and attr.mode == "directory"
 end
@@ -81,10 +82,10 @@ function import(path)
   if (is_directory(resolved_path)) then
     resolved_path = resolved_path .. "/init"
   end
-  -- TODO fix path normalization
-  -- local normal_path = normalise_path(resolved_path)
-  -- print(normal_path)
-  local require_arg = to_require_arg(resolved_path)
+  resolved_path = lfs.normalize_slashes(resolved_path)
+
+  local normal_path = lfs.trimRootPath(resolved_path)
+  local require_arg = to_require_arg(normal_path)
   -- print('import_lua_dir: ' .. import_lua_dir)
   -- print('path: ' .. path)
   -- print('__dirname: ' .. __dirname)

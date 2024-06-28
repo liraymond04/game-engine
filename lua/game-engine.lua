@@ -157,4 +157,11 @@ function audio_group_set_volume(group, volume) end
 ---
 function EMSCRIPTEN_readdir(path) end
 
-EMSCRIPTEN = false
+---
+---Emscripten function to check if the given path is a file or a directory
+---@param path string Path to directory to check
+---
+function EMSCRIPTEN_is_file_or_directory(path) end
+
+EMSCRIPTEN = EMSCRIPTEN or false
+WIN32 = WIN32 or false

@@ -115,8 +115,26 @@ void Engine_InitLua(Engine_t *engine) {
     engine->L = luaL_newstate();
     luaL_openlibs(engine->L);
 
+    // Initialize constants
+    lua_pushstring(engine->L, LUA_PATH);
+    lua_setglobal(engine->L, "LUA_PATH");
+
+#ifdef __EMSCRIPTEN__
+    lua_pushboolean(engine->L, true);
+    lua_setglobal(engine->L, "EMSCRIPTEN");
+#endif
+
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+    lua_pushboolean(engine->L, true);
+    lua_setglobal(engine->L, "WIN32");
+#endif
+
+    // Add Lua path to package paths
+    luaL_dostring(engine->L,
+                  "package.path = package.path .. ';" LUA_PATH "?.lua'");
+
     // Run metatable definitions
-    luaL_dofile(engine->L, LUA_PATH "include.lua");
+    luaL_dofile(engine->L, LUA_INC_PATH "include.lua");
 
     // C function bindings
     lua_pushcfunction(engine->L, RegisterFunction);

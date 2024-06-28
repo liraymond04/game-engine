@@ -97,7 +97,7 @@ done
 
 # Copy engine DLL to running directory
 if [ "$project_type" == "windows" ]; then
-    cp "$build_directory/src/engine.dll" "$running_directory"
+    # cp "$build_directory/src/engine.dll" "./"
 fi
 
 # cd $running_directory

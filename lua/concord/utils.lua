@@ -26,44 +26,7 @@ function Utils.isFile(path)
 end
 
 function Utils.listDirectory(path)
-    if not EMSCRIPTEN then
-        local p = io.popen('ls "' .. path .. '"')
-
-        if not p then
-            return
-        end
-
-        local files = {}
-        for file in p:lines() do
-            table.insert(files, file)
-        end
-
-        for entry in lfs.dir(path) do
-            if entry ~= "." and entry ~= ".." then
-                local full_path = path .. "/" .. entry
-                local attr = lfs.attributes(full_path)
-                if attr.mode == "file" then
-                    table.insert(files, entry)
-                end
-            end
-        end
-
-        p:close()
-        return files
-    else
-        local p = EMSCRIPTEN_readdir(path)
-
-        if not p then
-            return
-        end
-
-        local files = {}
-        for _, file in ipairs(p) do
-            table.insert(files, file)
-        end
-
-        return files
-    end
+    return lfs.dir(path)
 end
 
 ---TODO

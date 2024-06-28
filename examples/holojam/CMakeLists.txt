@@ -23,16 +23,14 @@ endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# Get the path to /project-root/lua
-set(LUA_PATH "${PROJECT_ROOT}/lua")
-
 # set build paths
 if(BUILD_PATHS AND NOT EMSCRIPTEN)
     target_compile_definitions(engine PRIVATE BUILD_PATHS=ON)
     target_compile_definitions(engine PRIVATE RRES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/")
     target_compile_definitions(engine PRIVATE SCENE_PATH="${CMAKE_CURRENT_SOURCE_DIR}/scenes/bin/")
     target_compile_definitions(engine PRIVATE MOD_PATH="${CMAKE_CURRENT_SOURCE_DIR}/mods/")
-    target_compile_definitions(engine PRIVATE LUA_PATH="./lua/")
+    target_compile_definitions(engine PRIVATE LUA_INC_PATH="${PROJECT_ROOT}/lua/")
+    target_compile_definitions(engine PRIVATE LUA_PATH="${CMAKE_CURRENT_SOURCE_DIR}/")
 endif()
 
 if (EMSCRIPTEN)
@@ -41,7 +39,8 @@ if (EMSCRIPTEN)
     target_compile_definitions(engine PRIVATE RRES_PATH="/")
     target_compile_definitions(engine PRIVATE SCENE_PATH="/scenes/")
     target_compile_definitions(engine PRIVATE MOD_PATH="/mods/")
-    target_compile_definitions(engine PRIVATE LUA_PATH="/lua/")
+    target_compile_definitions(engine PRIVATE LUA_INC_PATH="/lua/")
+    target_compile_definitions(engine PRIVATE LUA_PATH="/")
 
     # Compile and link dynamic library for mod scene
     add_library(web_scene SHARED "scenes/mod_scene/mod_scene.c")
@@ -56,7 +55,7 @@ set(EXAMPLE_BUILD_DIR "${CMAKE_BINARY_DIR}/examples/${PROJECT_NAME}")
 set(PRELOAD_FOLDERS
     "${EXAMPLE_DIR}/mods"
     # "${EXAMPLE_DIR}/scenes/bin"
-    "${LUA_PATH}"
+    "${PROJECT_ROOT}/lua"
 )
 set(PRELOAD_DEST
     "/mods"
@@ -167,5 +166,16 @@ if(NOT BUILD_PATHS)
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_CURRENT_SOURCE_DIR}/out.rres.json
         ${RELEASE_RES_DIR}/out.rres.json
+    )
+endif()
+
+if (WIN32 AND NOT BUILD_PATHS)
+    # Copy engine dll to release directory
+    file(MAKE_DIRECTORY ${RELEASE_RES_DIR})
+    set(FILE_NAME "engine.dll")
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${RELEASE_ENGINE_BUILD_DIR}/${FILE_NAME}
+        ${RELEASE_RES_DIR}/${FILE_NAME}
     )
 endif()

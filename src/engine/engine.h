@@ -33,7 +33,8 @@
 #define RRES_PATH "./"
 #define SCENE_PATH "./scenes/"
 #define MOD_PATH "./mods/"
-#define LUA_PATH "./lua/"
+#define LUA_INC_PATH "./lua/"
+#define LUA_PATH "./"
 #endif
 
 typedef struct Engine {

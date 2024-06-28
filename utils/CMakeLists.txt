@@ -52,5 +52,7 @@ foreach(SOURCE_FILE ${SOURCE_FILES})
     add_executable(${EXECUTABLE_NAME} ${SOURCE_FILE})
     # Link libraries
     target_link_libraries(${EXECUTABLE_NAME} raylib -lm json-c)
-    target_compile_options(${EXECUTABLE_NAME} PUBLIC -Wno-deprecated-declarations)
+    if (NOT WIN32)
+        target_compile_options(${EXECUTABLE_NAME} PUBLIC -Wno-deprecated-declarations)
+    endif()
 endforeach()

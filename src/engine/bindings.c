@@ -1,5 +1,8 @@
 #include "engine.h"
 #include "bindings.h"
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+#include <sys/stat.h>
+#endif
 #include <string.h>
 
 #define LUA_REGISTER_FUNCTION(L, func)                                         \
@@ -90,6 +93,7 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, audio_group_get_volume);
     LUA_REGISTER_FUNCTION(engine->L, audio_group_set_volume);
     LUA_REGISTER_FUNCTION(engine->L, EMSCRIPTEN_readdir);
+    LUA_REGISTER_FUNCTION(engine->L, EMSCRIPTEN_is_file_or_directory);
 }
 
 int _GetFrameTime(lua_State *L) {
@@ -545,7 +549,8 @@ int _nk_edit_string_zero_terminated(lua_State *L) {
 
     // TODO
     // actually pass a filter instead of the default function
-    int ret = nk_edit_string_zero_terminated(engine_context->nk_ctx, flags, modified_str, max, nk_filter_default);
+    int ret = nk_edit_string_zero_terminated(
+        engine_context->nk_ctx, flags, modified_str, max, nk_filter_default);
 
     lua_pushstring(L, modified_str);
     lua_pushinteger(L, ret);
@@ -556,7 +561,8 @@ int _nk_edit_string_zero_terminated(lua_State *L) {
 int _nk_input_is_key_pressed(lua_State *L) {
     int key_enums = luaL_checkinteger(L, 1);
 
-    int ret = nk_input_is_key_pressed(&engine_context->nk_ctx->input, key_enums);
+    int ret =
+        nk_input_is_key_pressed(&engine_context->nk_ctx->input, key_enums);
 
     lua_pushboolean(L, ret);
 
@@ -809,6 +815,30 @@ int _EMSCRIPTEN_readdir(lua_State *L) {
 #endif
 }
 
+int _EMSCRIPTEN_is_file_or_directory(lua_State *L) {
+    const char *path = luaL_checkstring(L, 1);
+#ifdef __EMSCRIPTEN__
+    struct stat path_stat;
+    if (stat(path, &path_stat) != 0) {
+        lua_pushstring(L, "error");
+        return 1;
+    }
+
+    if (path_stat.st_mode & S_IFREG) {
+        lua_pushstring(L, "file");
+        return 1;
+    } else if (path_stat.st_mode & S_IFDIR) {
+        lua_pushstring(L, "directory");
+        return 1;
+    } else {
+        lua_pushstring(L, "unknown");
+        return 1;
+    }
+#else
+    lua_pushnil(L);
+    return 1;
+#endif
+}
 
 static Texture2D luaL_checktexture2d(lua_State *L, int arg) {
     luaL_checktype(L, arg, LUA_TTABLE);
@@ -1092,7 +1122,7 @@ void map_enums(lua_State *L) {
     lua_setfield(L, -2, "WINDOW_SCALE_LEFT");
     lua_pushinteger(L, NK_WINDOW_NO_INPUT);
     lua_setfield(L, -2, "WINDOW_NO_INPUT");
-    
+
     // Key enums
     lua_pushinteger(L, NK_KEY_NONE);
     lua_setfield(L, -2, "KEY_NONE");
@@ -1188,9 +1218,4 @@ void map_enums(lua_State *L) {
     lua_setfield(L, -2, "EDIT_COMMITED");
 
     lua_setglobal(L, "NK");
-
-#ifdef __EMSCRIPTEN__
-    lua_pushboolean(L, true);
-    lua_setglobal(L, "EMSCRIPTEN");
-#endif
 }
