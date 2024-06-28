@@ -35,9 +35,6 @@ elif [[ $target_flag == "windows" ]]; then
   build_dir+="-windows"
 fi
 
-# install luarocks modules
-# $rocks_pref luarocks install --tree=lua/lua_modules --only-deps game-engine-1.0.0-1.rockspec
-
 cmake_flags=("$debug_flag")
 if ! $build_examples; then
   cmake_flags+=("-DBUILD_EXAMPLE=OFF")
