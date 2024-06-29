@@ -1,21 +1,11 @@
 #include "platform.h"
 
-#ifdef __linux__
+#ifdef __EMSCRIPTEN__
 
-#include <dlfcn.h>
 #include <sys/stat.h>
 
-void *platform_load_library(const char *path) {
-    return dlopen(path, RTLD_LAZY | RTLD_GLOBAL);
-}
-
-void *platform_library_func(void *handle, const char *func) {
-    return dlsym(handle, func);
-}
-
-void platform_free_library(void *handle) { dlclose(handle); }
-
-const char *platform_get_error() { return dlerror(); }
+#define EXPORT
+#define DLL_EXTENSION "wasm"
 
 const char *platform_is_path_file_or_dir(const char *path) {
     struct stat path_stat;

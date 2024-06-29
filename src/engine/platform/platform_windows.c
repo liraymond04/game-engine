@@ -18,4 +18,18 @@ void platform_free_library(void *handle) {
 
 const char *platform_get_error() { return GetLastError(); }
 
+const char *platform_is_path_file_or_dir(const char *path) {
+    DWORD attributes = GetFileAttributes(path);
+
+    if (attributes == INVALID_FILE_ATTRIBUTES) {
+        return "error";
+    }
+
+    if (attributes & FILE_ATTRIBUTE_DIRECTORY) {
+        return "directory";
+    } else {
+        return "file";
+    }
+}
+
 #endif

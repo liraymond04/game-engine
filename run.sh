@@ -4,45 +4,50 @@
 project_type=""
 
 # Parse command-line arguments
-while getopts ":t:" opt; do
-  case $opt in
-    t)
-      project_type="$OPTARG"
+while (( "$#" )); do
+  case "$1" in
+    -t)
+      if [ -n "$2" ] && [ "${2:0:1}" != "-" ]; then
+        project_type="$2"
+        shift 2
+      else
+        echo "Option -t requires an argument." >&2
+        exit 1
+      fi
       ;;
-    \?)
-      echo "Invalid option: -$OPTARG" >&2
+    --)
+      shift
+      break
+      ;;
+    -*)
+      echo "Invalid option: $1" >&2
       exit 1
       ;;
-    :)
-      echo "Option -$OPTARG requires an argument." >&2
-      exit 1
+    *)
+      example_project="$1"
+      shift
       ;;
   esac
 done
 
-# Shift option index so $1 now refers to the first non-option argument
-shift $((OPTIND -1))
-
-# Check if an argument is provided
-if [ $# -eq 0 ]; then
+# Check if the example project name is provided
+if [ -z "$example_project" ]; then
     echo "Usage: $0 [-t <web|windows>] <example_project>"
     exit 1
 fi
 
-# Name of the example project
-example_project=$1
-
 # Directory of the root project
 root_directory="$(pwd)"
 
-# Check if the build directory exists
+# Determine the build directory based on the project type
 build_directory="$root_directory/build"
 if [ "$project_type" == "web" ]; then
     build_directory="$root_directory/build-web"
-fi
-if [ "$project_type" == "windows" ]; then
+elif [ "$project_type" == "windows" ]; then
     build_directory="$root_directory/build-windows"
 fi
+
+# Check if the build directory exists
 if [ ! -d "$build_directory" ]; then
     echo "Error: Build directory not found. Please build the project first."
     exit 1
@@ -63,8 +68,7 @@ if [ -f "$html_file" ]; then
     exit 0
 fi
 
-
-
+# Determine the executable based on the project type
 executable=""
 if [ "$project_type" == "windows" ]; then
     executable="$example_directory/$example_project.exe"
@@ -97,7 +101,7 @@ done
 
 # Copy engine DLL to running directory
 if [ "$project_type" == "windows" ]; then
-    # cp "$build_directory/src/engine.dll" "./"
+    cp "$build_directory/src/engine.dll" "./"
 fi
 
 # cd $running_directory

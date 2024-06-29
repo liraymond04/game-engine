@@ -10,7 +10,7 @@ end
 
 package.path = package.path .. ";" .. cwd() .. "?/init.lua"
 package.path = package.path .. ";" .. cwd() .. "?.lua"
-package.path = package.path .. ";" .. "/" .. "?.lua"
+package.path = package.path .. ";" .. "?.lua"
 
 require('import')
 

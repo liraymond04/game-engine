@@ -74,6 +74,6 @@ int _audio_group_remove_sound(lua_State *L);
 int _audio_group_get_volume(lua_State *L);
 int _audio_group_set_volume(lua_State *L);
 int _EMSCRIPTEN_readdir(lua_State *L);
-int _EMSCRIPTEN_is_file_or_directory(lua_State *L);
+int _engine_is_file_or_directory(lua_State *L);
 
 #endif // !ENGINE_BINDINGS

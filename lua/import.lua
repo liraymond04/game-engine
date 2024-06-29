@@ -3,7 +3,7 @@
 
 local lfs = require("lfs")
 
-local import_lua_dir = LUA_PATH or debug.getinfo(1, 'S').source:sub(2):match('(.*)' .. (...):gsub('%.', '/') .. '.lua')
+local import_lua_dir = debug.getinfo(1, 'S').source:sub(2):match('(.*)' .. (...):gsub('%.', '/') .. '.lua')
 
 ---Function to check if a path is a directory
 --
@@ -69,22 +69,66 @@ local function normalise_path(s)
   return to_return
 end
 
----The lua-import module provides a function,
+-- Function to convert Windows paths to Unix paths and remove drive letter
+local function convert_windows_to_unix_path(win_path)
+  -- Convert backslashes to forward slashes
+  local unix_path = win_path:gsub("\\", "/")
+  -- Remove the drive letter (e.g., "C:/") if present
+  unix_path = unix_path:gsub("^%a:/", "/")
+  return unix_path
+end
+
+local function convert_unix_to_windows_path(unix_path)
+  -- If the path starts with '/', it's an absolute Unix path
+  if unix_path:sub(1, 1) == "/" then
+    return "Z:" .. unix_path
+  else
+    -- Handle relative paths (if needed)
+    return unix_path
+  end
+end
+
+---The lua-import module provides a function',
 ---the function takes single single string argument which is a glob pattern.
 ---The return value is the module refered by the glob pattern.
 --
 ---@param path any
 ---@return unknown
 function import(path)
-  local __dirname = debug.getinfo(2, 'S').source:sub(2):match('(.*' .. '/' .. ')')
+  if (EMSCRIPTEN) then
+    local __dirname = debug.getinfo(2, 'S').source:sub(2):match('(.*' .. '/' .. ')')
+    local resolved_path = resolve_relative(path, __dirname)
+
+    if (is_directory(resolved_path)) then
+      resolved_path = resolved_path .. "/init"
+    end
+    resolved_path = lfs.normalize_slashes(resolved_path)
+
+    local require_arg = to_require_arg(resolved_path)
+    return require(require_arg)
+  end
+
+  local debug_path = debug.getinfo(2, 'S').source:sub(2)
+  local __dirname
+  if debug_path:find('\\') then
+    debug_path = convert_windows_to_unix_path(debug_path)
+  end
+  __dirname = debug_path:match('(.*' .. '/' .. ')')
+  __dirname = lfs.normalize_slashes(__dirname)
+
+  if (WIN32) then
+    __dirname = convert_unix_to_windows_path(__dirname)
+  end
   local resolved_path = resolve_relative(path, __dirname)
+  resolved_path = lfs.normalize_slashes(resolved_path)
 
   if (is_directory(resolved_path)) then
     resolved_path = resolved_path .. "/init"
   end
-  resolved_path = lfs.normalize_slashes(resolved_path)
-
-  local normal_path = lfs.trimRootPath(resolved_path)
+  local normal_path = normalise_path(resolved_path)
+  if (WIN32) then
+    normal_path = lfs.backNormalizePath(normal_path)
+  end
   local require_arg = to_require_arg(normal_path)
   -- print('import_lua_dir: ' .. import_lua_dir)
   -- print('path: ' .. path)

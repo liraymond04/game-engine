@@ -11,4 +11,6 @@ void platform_free_library(void *handle);
 
 const char *platform_get_error();
 
+const char *platform_is_path_file_or_dir(const char *path);
+
 #endif // !PLATFORM_H

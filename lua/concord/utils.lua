@@ -29,8 +29,6 @@ function Utils.listDirectory(path)
     return lfs.dir(path)
 end
 
----TODO
--- Add OS implementations for windows
 function Utils.loadNamespace(pathOrFiles, namespace)
     namespace = namespace or {}
 
@@ -48,7 +46,7 @@ function Utils.loadNamespace(pathOrFiles, namespace)
                 local name = file:sub(1, #file - 4)
                 local path = pathOrFiles .. "." .. name
 
-                local value = require(path:gsub("/", "."))
+                local value = import(path:gsub("/", "."))
                 if namespace then namespace[name] = value end
             end
         end

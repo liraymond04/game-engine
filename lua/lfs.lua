@@ -11,8 +11,7 @@ function lfs.remove_drive_from_path(path)
     return cleaned_path
 end
 
-function lfs.trimRootPath(absolute)
-    root = LUA_PATH
+function lfs.trimRootPath(root, absolute)
     -- Ensure both root and absolute paths end with a slash for consistent processing
     if root:sub(-1) ~= '/' then
         root = root .. '/'
@@ -146,13 +145,7 @@ end
 function lfs.attributes(path)
     local ret = {}
 
-    if not EMSCRIPTEN and not WIN32 then
-        ret.mode = is_file_or_directory_posix(path)
-    elseif WIN32 then
-        ret.mode = is_file_or_directory_windows(path)
-    elseif EMSCRIPTEN then
-        ret.mode = EMSCRIPTEN_is_file_or_directory(path)
-    end
+    ret.mode = engine_is_file_or_directory(path)
 
     return ret
 end
