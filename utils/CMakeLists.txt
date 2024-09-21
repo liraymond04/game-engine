@@ -11,14 +11,14 @@ function(fetch_and_build_project TARGET_NAME URL)
     FetchContent_Declare(
         ${TARGET_NAME}
         URL ${URL}
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
     FetchContent_GetProperties(${TARGET_NAME})
     if (NOT ${TARGET_NAME}_POPULATED)
         set(FETCHCONTENT_QUIET NO)
-        FetchContent_Populate(${TARGET_NAME})
+        FetchContent_MakeAvailable(${TARGET_NAME})
         set(BUILD_STATIC_LIBS ON CACHE BOOL "" FORCE) # Example customization, adjust as needed
         set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # Example customization, adjust as needed
-        add_subdirectory(${${TARGET_NAME}_SOURCE_DIR} ${${TARGET_NAME}_BINARY_DIR})
     endif()
 endfunction()
 

@@ -94,6 +94,29 @@ local debug_console = {
 RegisterFunction("HOOK_MAIN_MENU_INIT", function()
   print("(Core Mod): Main menu init!")
 
+  local host = "localhost"
+  local post = "3012"
+  local ws_url = string.format("ws://%s:%s", host, post)
+
+  local uuid = generate_uuid()
+  local room = "gg"
+
+  rtc_set_message_opened_callback(function()
+    print("data channel opened")
+  end)
+
+  rtc_set_message_received_callback(function(id, message, size, ptr)
+    print("data channel received"..message)
+  end)
+
+  rtc_set_message_closed_callback(function()
+    print("data channel closed")
+  end)
+
+  rtc_initialize(ws_url, uuid, room)
+
+  rtc_handle_connection()
+
   event_register("TEST", "main_menu_listener", function()
     print("main_menu TEST event fired")
     return false
@@ -112,6 +135,10 @@ RegisterFunction("HOOK_MAIN_MENU_PROCESS_INPUT", function()
 
   if EDIT_ACTIVE then
     return
+  end
+
+  if IsKeyPressed("KEY_R") then
+    rtc_send_message("hi")
   end
 
   if IsKeyDown("KEY_F") then
@@ -175,6 +202,7 @@ RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
     nk_layout_row_static(30, 80, 1)
     if nk_button_label("button") then
       print("button pressed")
+      rtc_send_message("message")
     end
     nk_layout_row_dynamic(30, 2);
     if nk_option_label("easy", OP == EASY) then
@@ -310,5 +338,6 @@ RegisterFunction("HOOK_MAIN_MENU_DRAW", function()
 end)
 
 RegisterFunction("HOOK_MAIN_MENU_CLEANUP", function()
+  rtc_cleanup()
   print("(Core Mod): Main menu cleanup!")
 end)

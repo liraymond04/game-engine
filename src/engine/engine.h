@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <lua.h>
+#include <pthread.h>
 
 #if defined(PLATFORM_WEB)
 #include <emscripten/emscripten.h>
@@ -17,6 +18,7 @@
 #include "hooks.h"
 #include "scene.h"
 #include "audio.h"
+#include "rtc_handler.h"
 
 #include "platform/platform.h"
 
@@ -36,6 +38,8 @@
 #define LUA_INC_PATH "./lua/"
 #define LUA_PATH "./"
 #endif
+
+#define MAX_SERVERS 1
 
 typedef struct Engine {
     struct ZSortedHashTable *hooks;
@@ -64,6 +68,9 @@ typedef struct Engine {
     audio_group_t *audio_groups[AUDIO_GROUP_MAX];
 
     struct nk_context *nk_ctx;
+
+    pthread_mutex_t lock;
+    pthread_cond_t cond;
 
     RenderTexture2D renderTexture;
 } Engine_t;

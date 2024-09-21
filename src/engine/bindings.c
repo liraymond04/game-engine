@@ -1,4 +1,6 @@
 #include "engine.h"
+#include "lua.h"
+#include "rtc_handler.h"
 #include "bindings.h"
 #include <string.h>
 
@@ -68,6 +70,17 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, nk_edit_set_cursor);
     LUA_REGISTER_FUNCTION(engine->L, nk_edit_string_zero_terminated);
     LUA_REGISTER_FUNCTION(engine->L, nk_input_is_key_pressed);
+
+    /* RTC Handler */
+    LUA_REGISTER_FUNCTION(engine->L, generate_uuid);
+    LUA_REGISTER_FUNCTION(engine->L, rtc_initialize);
+    LUA_REGISTER_FUNCTION(engine->L, rtc_handle_connection);
+    LUA_REGISTER_FUNCTION(engine->L, rtc_cleanup);
+    LUA_REGISTER_FUNCTION(engine->L, rtc_send_message);
+    LUA_REGISTER_FUNCTION(engine->L, rtc_send_typed_object);
+    LUA_REGISTER_FUNCTION(engine->L, rtc_set_message_opened_callback);
+    LUA_REGISTER_FUNCTION(engine->L, rtc_set_message_received_callback);
+    LUA_REGISTER_FUNCTION(engine->L, rtc_set_message_closed_callback);
 
     /* Engine */
     LUA_REGISTER_FUNCTION(engine->L, Engine_SetMasterVolume);
@@ -564,6 +577,155 @@ int _nk_input_is_key_pressed(lua_State *L) {
     lua_pushboolean(L, ret);
 
     return 1;
+}
+
+int _generate_uuid(lua_State *L) {
+    char uuid[UUID_STR_LEN];
+    generate_uuid(uuid);
+
+    lua_pushstring(L, uuid);
+
+    return 1;
+}
+
+static char *ice_servers[MAX_SERVERS] = { "stun:stun.l.google.com:19302" };
+static int count = 1;
+static char *ws_url, *username, *room;
+
+static int ws_joined = 0;
+static int ws_ret_code = 0;
+
+int _rtc_initialize(lua_State *L) {
+    ws_url = (char *)luaL_checkstring(L, 1);
+    username = (char *)luaL_checkstring(L, 2);
+    room = (char *)luaL_checkstring(L, 3);
+
+    pthread_mutex_init(&engine_context->lock, NULL);
+    pthread_cond_init(&engine_context->cond, NULL);
+
+    rtc_initialize((const char **)ice_servers, count, ws_url, username, room,
+                   &engine_context->lock, &engine_context->cond, &ws_joined,
+                   &ws_ret_code);
+
+    pthread_mutex_lock(&engine_context->lock);
+    while (!ws_joined) {
+        pthread_cond_wait(&engine_context->cond, &engine_context->lock);
+    }
+    pthread_mutex_unlock(&engine_context->lock);
+
+    pthread_mutex_destroy(&engine_context->lock);
+    pthread_cond_destroy(&engine_context->cond);
+
+    lua_pushinteger(L, ws_ret_code);
+
+    return 1;
+}
+
+int _rtc_handle_connection(lua_State *L) {
+    rtc_handle_connection();
+
+    return 0;
+}
+
+int _rtc_cleanup(lua_State *L) {
+    rtc_cleanup();
+
+    return 0;
+}
+
+int _rtc_send_message(lua_State *L) {
+    const char *message = luaL_checkstring(L, 1);
+
+    rtc_send_message(message);
+
+    return 0;
+}
+
+int _rtc_send_typed_object(lua_State *L) {
+    const char *type = luaL_checkstring(L, 1);
+    const char *object = luaL_checkstring(L, 2);
+    json_object *root = json_tokener_parse(object);
+
+    rtc_send_typed_object(type, root);
+
+    return 0;
+}
+
+static int msgOpenCb_ref = LUA_NOREF;
+void msgOpenCb(int id, void *ptr) {
+    if (msgOpenCb_ref != LUA_NOREF) {
+        lua_rawgeti(engine_context->L, LUA_REGISTRYINDEX, msgOpenCb_ref);
+
+        lua_pushinteger(engine_context->L, id);
+        lua_pushlightuserdata(engine_context->L, ptr);
+
+        if (lua_pcall(engine_context->L, 2, 0, 0) != 0) {
+            fprintf(stderr, "Error calling Lua function: %s\n",
+                    lua_tostring(engine_context->L, -1));
+            lua_pop(engine_context->L, 1); // Pop the error message
+        }
+    }
+}
+
+static int msgReceiveCb_ref = LUA_NOREF;
+void msgReceiveCb(int id, const char *message, int size, void *ptr) {
+    if (msgReceiveCb_ref != LUA_NOREF) {
+        lua_rawgeti(engine_context->L, LUA_REGISTRYINDEX, msgReceiveCb_ref);
+
+        lua_pushinteger(engine_context->L, id);
+        lua_pushstring(engine_context->L, message);
+        lua_pushinteger(engine_context->L, size);
+        lua_pushlightuserdata(engine_context->L, ptr);
+
+        if (lua_pcall(engine_context->L, 4, 0, 0) != 0) {
+            fprintf(stderr, "Error calling Lua function: %s\n",
+                    lua_tostring(engine_context->L, -1));
+            lua_pop(engine_context->L, 1); // Pop the error message
+        }
+    }
+}
+
+static int msgCloseCb_ref = LUA_NOREF;
+void msgCloseCb(int id, void *ptr) {
+    if (msgCloseCb_ref != LUA_NOREF) {
+        lua_rawgeti(engine_context->L, LUA_REGISTRYINDEX, msgCloseCb_ref);
+
+        lua_pushinteger(engine_context->L, id);
+        lua_pushlightuserdata(engine_context->L, ptr);
+
+        if (lua_pcall(engine_context->L, 2, 0, 0) != 0) {
+            fprintf(stderr, "Error calling Lua function: %s\n",
+                    lua_tostring(engine_context->L, -1));
+            lua_pop(engine_context->L, 1); // Pop the error message
+        }
+    }
+}
+
+int _rtc_set_message_opened_callback(lua_State *L) {
+    luaL_checktype(L, 1, LUA_TFUNCTION);
+    msgOpenCb_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+
+    rtc_set_message_opened_callback(msgOpenCb);
+
+    return 0;
+}
+
+int _rtc_set_message_received_callback(lua_State *L) {
+    luaL_checktype(L, 1, LUA_TFUNCTION);
+    msgReceiveCb_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+
+    rtc_set_message_received_callback(msgReceiveCb);
+
+    return 0;
+}
+
+int _rtc_set_message_closed_callback(lua_State *L) {
+    luaL_checktype(L, 1, LUA_TFUNCTION);
+    msgCloseCb_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+
+    rtc_set_message_closed_callback(msgCloseCb);
+
+    return 0;
 }
 
 int _Engine_SetMasterVolume(lua_State *L) {

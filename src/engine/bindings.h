@@ -53,6 +53,17 @@ int _nk_edit_set_cursor(lua_State *L);
 int _nk_edit_string_zero_terminated(lua_State *L);
 int _nk_input_is_key_pressed(lua_State *L);
 
+/* RTC Handler */
+int _generate_uuid(lua_State *L);
+int _rtc_initialize(lua_State *L);
+int _rtc_handle_connection(lua_State *L);
+int _rtc_cleanup(lua_State *L);
+int _rtc_send_message(lua_State *L);
+int _rtc_send_typed_object(lua_State *L);
+int _rtc_set_message_opened_callback(lua_State *L);
+int _rtc_set_message_received_callback(lua_State *L);
+int _rtc_set_message_closed_callback(lua_State *L);
+
 /* Engine */
 int _Engine_SetMasterVolume(lua_State *L);
 int _Engine_GetWidth(lua_State *L);

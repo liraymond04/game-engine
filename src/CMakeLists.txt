@@ -20,14 +20,14 @@ function(fetch_and_build_project TARGET_NAME URL)
     FetchContent_Declare(
         ${TARGET_NAME}
         URL ${URL}
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
     FetchContent_GetProperties(${TARGET_NAME})
     if (NOT ${TARGET_NAME}_POPULATED)
         set(FETCHCONTENT_QUIET NO)
-        FetchContent_Populate(${TARGET_NAME})
+        FetchContent_MakeAvailable(${TARGET_NAME})
         set(BUILD_STATIC_LIBS ON CACHE BOOL "" FORCE) # Example customization, adjust as needed
         set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # Example customization, adjust as needed
-        add_subdirectory(${${TARGET_NAME}_SOURCE_DIR} ${${TARGET_NAME}_BINARY_DIR})
     endif()
 endfunction()
 
@@ -56,7 +56,50 @@ file(GLOB_RECURSE SRC_FILES "${SRC_DIR}/engine/*.c")
 
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
-target_link_libraries(${PROJECT_NAME} raylib -lm lua_static json-c)
+if(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
+    set(DATACHANNEL-WASM_VERSION 0.3.0)
+    find_package(datachannel-wasm ${DATACHANNEL-WASM_VERSION} QUIET)
+    if (NOT datachannel-wasm_FOUND)
+        FetchContent_Declare(datachannel-wasm
+            GIT_REPOSITORY https://github.com/paullouisageneau/datachannel-wasm.git
+            GIT_TAG v${DATACHANNEL-WASM_VERSION}
+            GIT_SUBMODULES_RECURSE ON
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        )
+
+        FetchContent_GetProperties(datachannel-wasm)
+        if (NOT datachannel-wasm_POPULATED)
+            set(FETCHCONTENT_QUIET NO)
+            FetchContent_MakeAvailable(datachannel-wasm)
+            set(BUILD_STATIC_LIBS ON CACHE BOOL "" FORCE) # Example customization, adjust as needed
+            set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # Example customization, adjust as needed
+        endif()
+    endif()
+    target_link_libraries(${PROJECT_NAME} datachannel-wasm)
+else()
+    set(CMAKE_PROJECT_VERSION 1.0.0)
+    set(LIBDATACHANNEL_VERSION 0.21.2)
+    find_package(libdatachannel ${LIBDATACHANNEL_VERSION} QUIET)
+    if (NOT libdatachannel_FOUND)
+        FetchContent_Declare(libdatachannel
+            GIT_REPOSITORY https://github.com/paullouisageneau/libdatachannel.git
+            GIT_TAG v${LIBDATACHANNEL_VERSION}
+            GIT_SUBMODULES_RECURSE ON
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        )
+
+        FetchContent_GetProperties(libdatachannel)
+        if (NOT libdatachannel_POPULATED)
+            set(FETCHCONTENT_QUIET NO)
+            FetchContent_MakeAvailable(libdatachannel)
+            set(BUILD_STATIC_LIBS ON CACHE BOOL "" FORCE) # Example customization, adjust as needed
+            set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # Example customization, adjust as needed
+        endif()
+    endif()
+    target_link_libraries(${PROJECT_NAME} datachannel)
+endif()
+
+target_link_libraries(${PROJECT_NAME} raylib -lm lua_static json-c uuid pthread)
 if (NOT WIN32)
     target_compile_options(${PROJECT_NAME} PUBLIC -Wno-deprecated-declarations)
 endif()
