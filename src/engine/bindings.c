@@ -600,13 +600,16 @@ int _rtc_initialize(lua_State *L) {
     username = (char *)luaL_checkstring(L, 2);
     room = (char *)luaL_checkstring(L, 3);
 
+#ifndef __EMSCRIPTEN__
     pthread_mutex_init(&engine_context->lock, NULL);
     pthread_cond_init(&engine_context->cond, NULL);
+#endif
 
     rtc_initialize((const char **)ice_servers, count, ws_url, username, room,
                    &engine_context->lock, &engine_context->cond, &ws_joined,
                    &ws_ret_code);
 
+#ifndef __EMSCRIPTEN__
     pthread_mutex_lock(&engine_context->lock);
     while (!ws_joined) {
         pthread_cond_wait(&engine_context->cond, &engine_context->lock);
@@ -615,6 +618,7 @@ int _rtc_initialize(lua_State *L) {
 
     pthread_mutex_destroy(&engine_context->lock);
     pthread_cond_destroy(&engine_context->cond);
+#endif
 
     lua_pushinteger(L, ws_ret_code);
 
@@ -622,7 +626,9 @@ int _rtc_initialize(lua_State *L) {
 }
 
 int _rtc_handle_connection(lua_State *L) {
+#ifndef __EMSCRIPTEN__
     rtc_handle_connection();
+#endif
 
     return 0;
 }

@@ -2,6 +2,8 @@
 
 #define MAX_PEERS 3
 
+#define DEBUG
+
 #ifdef DEBUG
 #define DEBUG_PRINT(...) printf(__VA_ARGS__)
 #else
@@ -63,6 +65,85 @@ void generate_uuid(char out[UUID_STR_LEN]) {
     uuid_unparse_lower(b, out);
 }
 
+#ifdef __EMSCRIPTEN__
+EM_BOOL onopen(int eventType,
+               const EmscriptenWebSocketOpenEvent *websocketEvent,
+               void *userData) {
+    DEBUG_PRINT("\nWebSocket connection opened (id: %d)\n", ws_id);
+
+    rtc_handle_connection();
+
+    return EM_TRUE;
+}
+
+EM_BOOL onerror(int eventType,
+                const EmscriptenWebSocketErrorEvent *websocketEvent,
+                void *userData) {
+    DEBUG_PRINT("\nWebSocket connection error (id: %d)\n", ws_id);
+
+    return EM_TRUE;
+}
+
+EM_BOOL onclose(int eventType,
+                const EmscriptenWebSocketCloseEvent *websocketEvent,
+                void *userData) {
+    DEBUG_PRINT("\nWebSocket connection closed (id: %d)\n", ws_id);
+
+    return EM_TRUE;
+}
+
+EM_BOOL onmessage(int eventType,
+                  const EmscriptenWebSocketMessageEvent *websocketEvent,
+                  void *userData) {
+    DEBUG_PRINT("(id: %d) message: %s\n", ws_id, websocketEvent->data);
+
+    json_object *root = json_tokener_parse((const char *)websocketEvent->data);
+
+    json_object *type = json_object_object_get(root, "type");
+    const char *type_str = json_object_get_string(type);
+
+    if (shouldRespond(root)) {
+        json_object *type = json_object_object_get(root, "type");
+        const char *type_str = json_object_get_string(type);
+
+        if (strcmp(type_str, "HANDLE_CONNECTION") == 0) {
+            DEBUG_PRINT("New peer wants to connect\n");
+            if (dataChannelCount < MAX_PEERS) {
+                connectPeers(root);
+            } else {
+                DEBUG_PRINT("Max peers connected\n");
+                rejectPeers(root);
+            }
+        } else if (strcmp(type_str, "offer") == 0) {
+            json_object *from = json_object_object_get(root, "from");
+            json_object *data = json_object_object_get(root, "data");
+            DEBUG_PRINT("GOT OFFER FROM A NODE WE WANT TO CONNECT TO\n");
+            DEBUG_PRINT("THE NODE IS %s\n", json_object_get_string(from));
+            processOffer(json_object_get_string(from),
+                         json_object_get_string(data));
+        } else if (strcmp(type_str, "REJECT_CONNECTION") == 0) {
+            json_object *data = json_object_object_get(root, "data");
+            DEBUG_PRINT("Connection offer rejected: %s\n",
+                        json_object_get_string(data));
+        }
+    }
+
+    if (messageListener) {
+        if (strcmp(type_str, "answer") == 0) {
+            json_object *data = json_object_object_get(root, "data");
+            DEBUG_PRINT("--- GOT ANSWER IN CONNECT ---\n");
+            rtcSetRemoteDescription(messageListener,
+                                    json_object_get_string(data), "answer");
+        } else if (strcmp(type_str, "candidate") == 0) {
+            json_object *data = json_object_object_get(root, "data");
+            rtcAddRemoteCandidate(messageListener, json_object_get_string(data),
+                                  NULL);
+        }
+    }
+    return EM_TRUE;
+}
+#endif
+
 void rtc_initialize(const char **stun_servers, int stun_servers_count,
                     const char *ws_url, const char *user, const char *rm,
                     pthread_mutex_t *lck, pthread_cond_t *cnd, int *joined,
@@ -81,22 +162,39 @@ void rtc_initialize(const char **stun_servers, int stun_servers_count,
     char url[256];
     snprintf(url, 256, "%s?user=%s&room=%s", ws_url, username, room);
 
+#ifdef __EMSCRIPTEN__
+    EmscriptenWebSocketCreateAttributes ws_attrs = { url, NULL, EM_TRUE };
+
+    EMSCRIPTEN_WEBSOCKET_T ws = emscripten_websocket_new(&ws_attrs);
+    ws_id = ws;
+    emscripten_websocket_set_onopen_callback(ws, NULL, onopen);
+    emscripten_websocket_set_onerror_callback(ws, NULL, onerror);
+    emscripten_websocket_set_onclose_callback(ws, NULL, onclose);
+    emscripten_websocket_set_onmessage_callback(ws, NULL, onmessage);
+#else
     ws_id = rtcCreateWebSocket(url);
 
     rtcSetOpenCallback(ws_id, onOpen);
     rtcSetClosedCallback(ws_id, onClosed);
     rtcSetErrorCallback(ws_id, onError);
     rtcSetMessageCallback(ws_id, onMessage);
+#endif
 }
 
-void rtc_handle_connection() { sendNegotiation("HANDLE_CONNECTION", NULL); }
+void rtc_handle_connection() {
+    sendNegotiation("HANDLE_CONNECTION", NULL);
+}
 
 void rtc_cleanup() {
-    for (int i=0; i<MAX_PEERS; i++) {
+    for (int i = 0; i < MAX_PEERS; i++) {
         rtcDeleteDataChannel(dataChannel[i]);
     }
 
+#ifdef __EMSCRIPTEN__
+    emscripten_websocket_delete(ws_id);
+#else
     rtcDeleteWebSocket(ws_id);
+#endif
 
     rtcCleanup();
 }
@@ -369,7 +467,12 @@ static void sendNegotiation(const char *type, json_object *data) {
 
     const char *json_string = json_object_to_json_string(root);
 
+#ifdef __EMSCRIPTEN__
+    emscripten_websocket_send_binary(ws_id, (void *)json_string,
+                                     strlen(json_string));
+#else
     rtcSendMessage(ws_id, json_string, strlen(json_string));
+#endif
 }
 
 static void sendOneToOneNegotiation(const char *type, const char *endpoint,
@@ -390,5 +493,10 @@ static void sendOneToOneNegotiation(const char *type, const char *endpoint,
 
     const char *json_string = json_object_to_json_string(root);
 
+#ifdef __EMSCRIPTEN__
+    emscripten_websocket_send_binary(ws_id, (void *)json_string,
+                                     strlen(json_string));
+#else
     rtcSendMessage(ws_id, json_string, strlen(json_string));
+#endif
 }

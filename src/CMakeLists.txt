@@ -57,11 +57,11 @@ file(GLOB_RECURSE SRC_FILES "${SRC_DIR}/engine/*.c")
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
 if(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
-    set(DATACHANNEL-WASM_VERSION 0.3.0)
+    set(DATACHANNEL-WASM_VERSION 0.3.5)
     find_package(datachannel-wasm ${DATACHANNEL-WASM_VERSION} QUIET)
     if (NOT datachannel-wasm_FOUND)
         FetchContent_Declare(datachannel-wasm
-            GIT_REPOSITORY https://github.com/paullouisageneau/datachannel-wasm.git
+            GIT_REPOSITORY https://github.com/liraymond04/datachannel-wasm.git
             GIT_TAG v${DATACHANNEL-WASM_VERSION}
             GIT_SUBMODULES_RECURSE ON
             DOWNLOAD_EXTRACT_TIMESTAMP TRUE

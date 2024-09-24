@@ -1,6 +1,10 @@
 #ifndef RTC_HANDLER_H
 #define RTC_HANDLER_H
 
+#ifndef UUID_STR_LEN
+#define UUID_STR_LEN 37
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -8,6 +12,11 @@
 
 #include <rtc/rtc.h>
 #include <json-c/json.h>
+
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten/websocket.h>
+#endif
 
 void generate_uuid(char out[UUID_STR_LEN]);
 void rtc_initialize(const char **stun_servers, int stun_servers_count,

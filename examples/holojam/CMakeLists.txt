@@ -16,6 +16,7 @@ add_executable(${PROJECT_NAME} ${SRC_FILES})
 target_link_libraries(${PROJECT_NAME} PRIVATE engine)
 
 if ("${PLATFORM}" STREQUAL "Web")
+    target_link_libraries(${PROJECT_NAME} PRIVATE websocket.js)
     set(EMSCRIPTEN TRUE)
 else()
     set(EMSCRIPTEN FALSE)

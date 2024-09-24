@@ -27,6 +27,10 @@
 #include "containers/zhash-c/zhash.h"
 #include "containers/zhash-c/zsorted_hash.h"
 
+#ifndef UUID_STR_LEN
+#define UUID_STR_LEN 37
+#endif
+
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
