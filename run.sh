@@ -106,6 +106,12 @@ fi
 
 # cd $running_directory
 
+# Check if the logs directory exists
+logs_directory="$root_directory/logs"
+if [ ! -d "$logs_directory" ]; then
+    mkdir $logs_directory
+fi
+
 # Run the executable
 echo "Running $example_project..."
 "$executable"

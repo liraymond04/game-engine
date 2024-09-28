@@ -50,6 +50,14 @@ if (NOT lua_static_FOUND)
     fetch_and_build_project(lua_static https://github.com/walterschell/Lua/archive/refs/tags/v${LUA_VERSION}.tar.gz)
 endif()
 
+if(NOT CMAKE_SYSTEM_NAME MATCHES "Emscripten")
+    set(ZLOG_VERSION 1.2.18)
+    find_package(zlog)
+    if (NOT zlog_FOUND)
+        fetch_and_build_project(zlog https://github.com/HardySimpson/zlog/archive/refs/tags/${ZLOG_VERSION}.tar.gz)
+    endif()
+endif()
+
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 file(GLOB_RECURSE SRC_FILES "${SRC_DIR}/engine/*.c")
@@ -97,6 +105,10 @@ else()
         endif()
     endif()
     target_link_libraries(${PROJECT_NAME} datachannel)
+endif()
+
+if(NOT CMAKE_SYSTEM_NAME MATCHES "Emscripten")
+    target_link_libraries(${PROJECT_NAME} zlog)
 endif()
 
 target_link_libraries(${PROJECT_NAME} raylib -lm lua_static json-c uuid pthread)

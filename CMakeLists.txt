@@ -45,6 +45,10 @@ if(BUILD_UTILS)
     endif()
 endif()
 
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    target_compile_definitions(engine PRIVATE $<$<CONFIG:Debug>:ENGINE_DEBUG>)
+endif()
+
 # add engine headers to global include
 target_include_directories(engine INTERFACE ${CMAKE_SOURCE_DIR}/src/engine)
 
