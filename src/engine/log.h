@@ -38,13 +38,13 @@ static inline void log_free() {
 
 #ifndef __EMSCRIPTEN__
 #ifdef DEBUG
-#define LOG_DEBUG(...)                                                         \
+#define L_DEBUG(...)                                                         \
     do {                                                                       \
         zlog_debug(zlog_get_category("stdout"), __VA_ARGS__);                  \
         zlog_debug(zlog_get_category("file"), __VA_ARGS__);                    \
     } while (0)
 #else
-#define LOG_DEBUG(...)                                                         \
+#define L_DEBUG(...)                                                         \
     do {                                                                       \
         zlog_debug(zlog_get_category("file"), __VA_ARGS__);                    \
     } while (0)

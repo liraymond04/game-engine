@@ -15,6 +15,7 @@ package.path = package.path .. ";" .. "?.lua"
 require('import')
 
 -- Includes
+require("logging")
 require("game-engine")
 require("raylib")
 require("nuklear")

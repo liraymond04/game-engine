@@ -82,6 +82,14 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, rtc_set_message_received_callback);
     LUA_REGISTER_FUNCTION(engine->L, rtc_set_message_closed_callback);
 
+    /* Logging */
+    LUA_REGISTER_FUNCTION(engine->L, L_DEBUG);
+    LUA_REGISTER_FUNCTION(engine->L, L_INFO);
+    LUA_REGISTER_FUNCTION(engine->L, L_NOTICE);
+    LUA_REGISTER_FUNCTION(engine->L, L_WARN);
+    LUA_REGISTER_FUNCTION(engine->L, L_ERROR);
+    LUA_REGISTER_FUNCTION(engine->L, L_FATAL);
+
     /* Engine */
     LUA_REGISTER_FUNCTION(engine->L, Engine_SetMasterVolume);
     LUA_REGISTER_FUNCTION(engine->L, Engine_GetWidth);
@@ -731,6 +739,42 @@ int _rtc_set_message_closed_callback(lua_State *L) {
 
     rtc_set_message_closed_callback(msgCloseCb);
 
+    return 0;
+}
+
+int _L_DEBUG(lua_State *L) {
+    const char *str = luaL_checkstring(L, 1);
+    L_DEBUG("%s", str);
+    return 0;
+}
+
+int _L_INFO(lua_State *L) {
+    const char *str = luaL_checkstring(L, 1);
+    L_INFO("%s", str);
+    return 0;
+}
+
+int _L_NOTICE(lua_State *L) {
+    const char *str = luaL_checkstring(L, 1);
+    L_NOTICE("%s", str);
+    return 0;
+}
+
+int _L_WARN(lua_State *L) {
+    const char *str = luaL_checkstring(L, 1);
+    L_WARN("%s", str);
+    return 0;
+}
+
+int _L_ERROR(lua_State *L) {
+    const char *str = luaL_checkstring(L, 1);
+    L_ERROR("%s", str);
+    return 0;
+}
+
+int _L_FATAL(lua_State *L) {
+    const char *str = luaL_checkstring(L, 1);
+    L_FATAL("%s", str);
     return 0;
 }
 

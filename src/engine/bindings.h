@@ -64,6 +64,14 @@ int _rtc_set_message_opened_callback(lua_State *L);
 int _rtc_set_message_received_callback(lua_State *L);
 int _rtc_set_message_closed_callback(lua_State *L);
 
+/* Logger */
+int _L_DEBUG(lua_State *L);
+int _L_INFO(lua_State *L);
+int _L_NOTICE(lua_State *L);
+int _L_WARN(lua_State *L);
+int _L_ERROR(lua_State *L);
+int _L_FATAL(lua_State *L);
+
 /* Engine */
 int _Engine_SetMasterVolume(lua_State *L);
 int _Engine_GetWidth(lua_State *L);
