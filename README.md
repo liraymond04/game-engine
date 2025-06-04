@@ -134,5 +134,6 @@ Release builds are meant to be the final version of your software that is shippe
 - https://github.com/json-c/json-c JSON library
 - https://github.com/walterschell/Lua CMake based build of Lua
 - https://github.com/emscripten-core/emscripten LLVM-to-WASM compiler
+- https://github.com/paullouisageneau/libdatachannel C/C++ WebRTC network library featuring Data Channels, Media Transport, and WebSockets
 - https://github.com/Keyslam-Group/Concord Feature compute Lua ECS
 - https://github.com/yogeshlonkar/lua-import Relative imports for Lua
