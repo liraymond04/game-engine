@@ -31,8 +31,25 @@ function(fetch_and_build_project TARGET_NAME URL)
     endif()
 endfunction()
 
+function(fetch_and_build_project_commit TARGET_NAME GITHUB_URL COMMIT_HASH)
+    FetchContent_Declare(
+        ${TARGET_NAME}
+        GIT_REPOSITORY ${GITHUB_URL}
+        GIT_TAG ${COMMIT_HASH}
+        GIT_SHALLOW TRUE
+        GIT_PROGRESS TRUE
+    )
+    FetchContent_GetProperties(${TARGET_NAME})
+    if (NOT ${TARGET_NAME}_POPULATED)
+        set(FETCHCONTENT_QUIET NO)
+        FetchContent_MakeAvailable(${TARGET_NAME})
+        set(BUILD_STATIC_LIBS ON CACHE BOOL "" FORCE) # Example customization
+        set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)   # Example customization
+    endif()
+endfunction()
+
 # Dependencies
-set(RAYLIB_VERSION 5.0)
+set(RAYLIB_VERSION 5.5)
 find_package(raylib ${RAYLIB_VERSION} QUIET)
 if (NOT raylib_FOUND)
     fetch_and_build_project(raylib https://github.com/raysan5/raylib/archive/refs/tags/${RAYLIB_VERSION}.tar.gz)
@@ -44,17 +61,17 @@ if (NOT json-c_FOUND OR WIN32)
     fetch_and_build_project(json-c https://github.com/json-c/json-c/archive/refs/tags/json-c-${JSON_C_VERSION}.tar.gz)
 endif()
 
-set(LUA_VERSION 5.4.5)
+set(LUA_VERSION 5.4.7)
 find_package(lua_static ${LUA_VERSION} QUIET)
 if (NOT lua_static_FOUND)
-    fetch_and_build_project(lua_static https://github.com/walterschell/Lua/archive/refs/tags/v${LUA_VERSION}.tar.gz)
+    fetch_and_build_project_commit(lua_static https://github.com/walterschell/Lua 3ed55a56eaa05c9221f40b3c07d0e908eb1067b0)
 endif()
 
 if(NOT CMAKE_SYSTEM_NAME MATCHES "Emscripten")
     set(ZLOG_VERSION 1.2.18)
     find_package(zlog)
     if (NOT zlog_FOUND)
-        fetch_and_build_project(zlog https://github.com/HardySimpson/zlog/archive/refs/tags/${ZLOG_VERSION}.tar.gz)
+        fetch_and_build_project_commit(zlog https://github.com/liraymond04/zlog cebb12ac56a1e18c3411e765ed8397a159732387)
     endif()
 endif()
 
@@ -86,12 +103,12 @@ if(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
     target_link_libraries(${PROJECT_NAME} datachannel-wasm)
 else()
     set(CMAKE_PROJECT_VERSION 1.0.0)
-    set(LIBDATACHANNEL_VERSION 0.21.2)
+    set(LIBDATACHANNEL_VERSION 0.22.6)
     find_package(libdatachannel ${LIBDATACHANNEL_VERSION} QUIET)
     if (NOT libdatachannel_FOUND)
         FetchContent_Declare(libdatachannel
             GIT_REPOSITORY https://github.com/paullouisageneau/libdatachannel.git
-            GIT_TAG v${LIBDATACHANNEL_VERSION}
+            GIT_TAG a81daaca4ca420be200ce9c9feb1cc76c8e3aa46
             GIT_SUBMODULES_RECURSE ON
             DOWNLOAD_EXTRACT_TIMESTAMP TRUE
         )

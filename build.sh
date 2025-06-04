@@ -36,6 +36,7 @@ elif [[ $target_flag == "windows" ]]; then
 fi
 
 cmake_flags=("$debug_flag")
+cmake_flags+=("-DCMAKE_POLICY_VERSION_MINIMUM=3.5")
 if ! $build_examples; then
   cmake_flags+=("-DBUILD_EXAMPLE=OFF")
 else
