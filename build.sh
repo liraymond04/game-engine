@@ -62,7 +62,6 @@ if [[ $target_flag == "web" ]]; then
         -DPLATFORM=Web \
         -DCMAKE_EXE_LINKER_FLAGS="-s USE_GLFW=3" \
         -DCMAKE_EXECUTABLE_SUFFIX=".html" \
-        -G Ninja \
         -B $build_dir
   cmake --build $build_dir
 elif [[ $target_flag == "windows" ]]; then

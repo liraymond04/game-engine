@@ -64,7 +64,7 @@ endif()
 set(LUA_VERSION 5.4.7)
 find_package(lua_static ${LUA_VERSION} QUIET)
 if (NOT lua_static_FOUND)
-    fetch_and_build_project_commit(lua_static https://github.com/walterschell/Lua 3ed55a56eaa05c9221f40b3c07d0e908eb1067b0)
+    fetch_and_build_project_commit(lua_static https://github.com/walterschell/Lua 504ef66d500fa1fb4f1684b6617b01342eee704a)
 endif()
 
 if(NOT CMAKE_SYSTEM_NAME MATCHES "Emscripten")

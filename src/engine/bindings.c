@@ -86,7 +86,7 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, L_DEBUG);
     LUA_REGISTER_FUNCTION(engine->L, L_INFO);
     LUA_REGISTER_FUNCTION(engine->L, L_NOTICE);
-    LUA_REGISTER_FUNCTION(engine->L, L_WARN);
+    // LUA_REGISTER_FUNCTION(engine->L, L_WARN);
     LUA_REGISTER_FUNCTION(engine->L, L_ERROR);
     LUA_REGISTER_FUNCTION(engine->L, L_FATAL);
 
@@ -760,11 +760,11 @@ int _L_NOTICE(lua_State *L) {
     return 0;
 }
 
-int _L_WARN(lua_State *L) {
-    const char *str = luaL_checkstring(L, 1);
-    L_WARN("%s", str);
-    return 0;
-}
+// int _L_WARN(lua_State *L) {
+//     const char *str = luaL_checkstring(L, 1);
+//     L_WARN("%s", str);
+//     return 0;
+// }
 
 int _L_ERROR(lua_State *L) {
     const char *str = luaL_checkstring(L, 1);
