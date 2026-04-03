@@ -1,3 +1,5 @@
+import("../bootstrap")
+
 local player_speed = 4.0
 
 local BLUE = { r = 50, g = 41, b = 55, a = 255 }

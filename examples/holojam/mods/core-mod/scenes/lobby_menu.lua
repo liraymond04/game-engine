@@ -1,4 +1,6 @@
-local STYLE_BLUE = import("styles/blue")
+import("../bootstrap")
+
+local STYLE_BLUE = import("../styles/blue")
 
 LOBBY_CODE_LENGTH = 5
 
@@ -91,5 +93,5 @@ RegisterFunction("HOOK_LOBBY_MENU_DRAW", function()
 end)
 
 RegisterFunction("HOOK_LOBBY_MENU_CLEANUP", function()
-  print("(Core Mod): Lobby menu cleanup!")
+  print("(Core mod): Lobby menu cleanup!")
 end)
