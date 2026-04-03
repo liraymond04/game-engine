@@ -24,17 +24,18 @@ float map(float x, float in_min, float in_max, float out_min, float out_max) {
 }
 
 Vector2 Engine_Core_GetAdjustedMousePos(Engine_t *engine) {
-    bool wide =
-        ((float)GetScreenWidth() / GetScreenHeight()) < engine->aspect_ratio;
+    float screen_width = (float)GetScreenWidth();
+    float screen_height = (float)GetScreenHeight();
+    bool wide = (screen_width / screen_height) < engine->aspect_ratio;
 
     float adjusted_width =
-        wide ? GetScreenWidth()
-             : (float)GetScreenHeight() * engine->aspect_ratio;
+        wide ? screen_width
+             : screen_height * engine->aspect_ratio;
     float adjusted_height =
-        !wide ? GetScreenHeight()
-              : (float)GetScreenWidth() / engine->aspect_ratio;
+        !wide ? screen_height
+              : screen_width / engine->aspect_ratio;
 
-    float subtracted_w = GetScreenWidth() - adjusted_width;
+    float subtracted_w = screen_width - adjusted_width;
     float start_w = subtracted_w / 2;
     float end_w = start_w + adjusted_width;
     float mx = (float)GetMouseX();
@@ -46,7 +47,7 @@ Vector2 Engine_Core_GetAdjustedMousePos(Engine_t *engine) {
     }
     mx = map(mx, start_w, end_w, 0, adjusted_width);
 
-    float subtracted_h = GetScreenHeight() - adjusted_height;
+    float subtracted_h = screen_height - adjusted_height;
     float start_h = subtracted_h / 2;
     float end_h = start_h + adjusted_height;
     float my = (float)GetMouseY();

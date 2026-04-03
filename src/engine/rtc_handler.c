@@ -1,8 +1,9 @@
 #include "rtc_handler.h"
+#include <stdio.h>
 
 #define MAX_PEERS 3
 
-#define DEBUG
+// #define DEBUG
 
 #ifdef DEBUG
 #define DEBUG_PRINT(...) printf(__VA_ARGS__)
@@ -144,10 +145,128 @@ EM_BOOL onmessage(int eventType,
 }
 #endif
 
+typedef struct {
+    int ws_id;
+    char room[256];
+    int result; // -1 = unknown, 0 = no, 1 = yes
+
+    void (*callback)(int exists, void *ptr);
+    void *user_ptr;
+
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+    int done;
+} room_check_ctx;
+
+static void wait_for_ws_close() {
+    if (!lock) return; // safety check
+
+    pthread_mutex_lock(lock);
+    while (!ws_joined) { // ws_joined signals closure
+        pthread_cond_wait(cond, lock);
+    }
+    pthread_mutex_unlock(lock);
+}
+
+static void rc_onOpen(int id, void *ptr) {
+    room_check_ctx *ctx = (room_check_ctx *)ptr;
+
+    json_object *root = json_object_new_object();
+    json_object_object_add(root, "protocol",
+                           json_object_new_string("room-exists"));
+    json_object_object_add(root, "room",
+                           json_object_new_string(ctx->room));
+
+    const char *msg = json_object_to_json_string(root);
+    rtcSendMessage(id, msg, strlen(msg));
+}
+
+static void rc_onMessage(int id, const char *message, int size, void *ptr) {
+    room_check_ctx *ctx = (room_check_ctx *)ptr;
+
+    json_object *root = json_tokener_parse(message);
+    json_object *type = json_object_object_get(root, "type");
+    const char *type_str = json_object_get_string(type);
+
+    if (type_str && strcmp(type_str, "ROOM_EXISTS_RESPONSE") == 0) {
+        json_object *exists_obj = json_object_object_get(root, "exists");
+        pthread_mutex_lock(&ctx->mutex);
+        ctx->result = json_object_get_boolean(exists_obj);
+        pthread_mutex_unlock(&ctx->mutex);
+
+        rtcDeleteWebSocket(id);
+    }
+}
+
+static void rc_onError(int id, const char *error, void *ptr) {
+    room_check_ctx *ctx = (room_check_ctx *)ptr;
+
+     ctx->result = -1;
+
+    rtcDeleteWebSocket(id);
+}
+
+static void rc_onClosed(int id, void *ptr) {
+    room_check_ctx *ctx = (room_check_ctx *)ptr;
+
+    pthread_mutex_lock(&ctx->mutex);
+    ctx->done = 1;
+    pthread_cond_signal(&ctx->cond);
+    pthread_mutex_unlock(&ctx->mutex);
+
+    if (ctx->callback) {
+        int result;
+        pthread_mutex_lock(&ctx->mutex);
+        result = ctx->result;
+        pthread_mutex_unlock(&ctx->mutex);
+        ctx->callback(result, ctx->user_ptr);
+    }
+}
+
+void rtc_check_room_exists_ws(const char *ws_url,
+                              const char *user,
+                              const char *room,
+                              void (*callback)(int exists, void *ptr),
+                              void *ptr) {
+    room_check_ctx *ctx = malloc(sizeof(room_check_ctx));
+    memset(ctx, 0, sizeof(room_check_ctx));
+
+    strncpy(ctx->room, room, sizeof(ctx->room) - 1);
+    ctx->callback = callback;
+    ctx->user_ptr = ptr;
+
+    char url[256];
+    snprintf(url, sizeof(url), "%s?user=%s&room=%s&mode=check", ws_url, user, room);
+
+#ifdef __EMSCRIPTEN__
+    EmscriptenWebSocketCreateAttributes ws_attrs = { url, NULL, EM_TRUE };
+
+    EMSCRIPTEN_WEBSOCKET_T ws = emscripten_websocket_new(&ws_attrs);
+    ctx->ws_id = ws;
+
+    emscripten_websocket_set_onopen_callback(ws, ctx, rc_onOpen);
+    emscripten_websocket_set_onmessage_callback(ws, ctx, rc_onMessage);
+    emscripten_websocket_set_onerror_callback(ws, ctx, rc_onError);
+    emscripten_websocket_set_onclose_callback(ws, ctx, rc_onClosed);
+#else
+    int ws = rtcCreateWebSocket(url);
+    ctx->ws_id = ws;
+
+    rtcSetUserPointer(ws, ctx);
+
+    rtcSetOpenCallback(ws, rc_onOpen);
+    rtcSetMessageCallback(ws, rc_onMessage);
+    rtcSetErrorCallback(ws, rc_onError);
+    rtcSetClosedCallback(ws, rc_onClosed);
+#endif
+}
+
 void rtc_initialize(const char **stun_servers, int stun_servers_count,
                     const char *ws_url, const char *user, const char *rm,
                     pthread_mutex_t *lck, pthread_cond_t *cnd, int *joined,
                     int *ret_code) {
+    wait_for_ws_close();
+
     config.iceServers = stun_servers;
     config.iceServersCount = stun_servers_count;
 
@@ -338,9 +457,19 @@ static inline void onDataChannelOpen(int id, void *ptr) {
 
 static inline void onDataChannelMessage(int id, const char *message, int size,
                                         void *ptr) {
-    DEBUG_PRINT("\nData channel received: %s\n", message);
+    DEBUG_PRINT("\nData channel received (%d bytes): %.*s\n", size, size,
+                message ? message : "");
     if (message_received_callback) {
-        message_received_callback(id, message, size, ptr);
+        char *safe = malloc((size_t)size + 1);
+        if (!safe) {
+            return;
+        }
+
+        memcpy(safe, message, (size_t)size);
+        safe[size] = '\0';
+
+        message_received_callback(id, safe, size, ptr);
+        free(safe);
     }
 }
 

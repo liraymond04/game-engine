@@ -39,6 +39,14 @@ function input_system:update()
 
         e.velocity.x = dir.x
         e.velocity.y = dir.y
+        --
+        -- if animator.state.moving then
+        --     rtc_send_message(DUMP({
+        --         uuid = CUR_PLAYER_DATA.uuid,
+        --         x = e.position.x,
+        --         y = e.position.y,
+        --     }))
+        -- end
     end
 end
 

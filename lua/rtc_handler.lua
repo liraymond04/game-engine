@@ -10,6 +10,15 @@
 function generate_uuid() end
 
 ---
+---Check RTC connection for room lobby
+---@param ws_url string Websocket URL
+---@param username string Username to connect with
+---@param room string Room code to check
+---@param callback function Result callback
+---
+function rtc_check_room_exists(ws_url, username, room, callback) end
+
+---
 ---Initialize RTC connection information
 ---@param ws_url string Websocket URL
 ---@param username string Username to connect with

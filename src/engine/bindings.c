@@ -1,5 +1,6 @@
 #include "engine.h"
 #include "lua.h"
+#include "raylib.h"
 #include "rtc_handler.h"
 #include "bindings.h"
 #include <string.h>
@@ -62,6 +63,8 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, nk_propertyf);
     LUA_REGISTER_FUNCTION(engine->L, nk_style_default);
     LUA_REGISTER_FUNCTION(engine->L, nk_style_from_table);
+    LUA_REGISTER_FUNCTION(engine->L, nk_style_push_text_color);
+    LUA_REGISTER_FUNCTION(engine->L, nk_style_pop_text_color);
     LUA_REGISTER_FUNCTION(engine->L, nk_group_begin);
     LUA_REGISTER_FUNCTION(engine->L, nk_group_end);
     LUA_REGISTER_FUNCTION(engine->L, nk_group_get_scroll);
@@ -73,6 +76,7 @@ void Engine_BindCFunctions(Engine_t *engine) {
 
     /* RTC Handler */
     LUA_REGISTER_FUNCTION(engine->L, generate_uuid);
+    LUA_REGISTER_FUNCTION(engine->L, rtc_check_room_exists);
     LUA_REGISTER_FUNCTION(engine->L, rtc_initialize);
     LUA_REGISTER_FUNCTION(engine->L, rtc_handle_connection);
     LUA_REGISTER_FUNCTION(engine->L, rtc_cleanup);
@@ -112,6 +116,20 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, audio_group_set_volume);
     LUA_REGISTER_FUNCTION(engine->L, EMSCRIPTEN_readdir);
     LUA_REGISTER_FUNCTION(engine->L, engine_is_file_or_directory);
+    LUA_REGISTER_FUNCTION(engine->L, mouse_pos);
+}
+
+int _mouse_pos(lua_State *L) {
+    lua_newtable(L);
+    lua_pushstring(L, "x");
+    lua_pushnumber(L, engine_context->mouse_pos.x);
+    // lua_pushnumber(L, GetMouseX());
+    lua_settable(L, -3);
+    lua_pushstring(L, "y");
+    lua_pushnumber(L, engine_context->mouse_pos.y);
+    // lua_pushnumber(L, GetMouseY());
+    lua_settable(L, -3);
+    return 1;
 }
 
 int _GetFrameTime(lua_State *L) {
@@ -501,6 +519,21 @@ int _nk_style_from_table(lua_State *L) {
     return 0;
 }
 
+int _nk_style_push_text_color(lua_State *L) {
+    struct nk_color col = luaL_checknkcolor(L, 1);
+
+    nk_style_push_color(engine_context->nk_ctx,
+        &engine_context->nk_ctx->style.text.color,
+        col);
+
+    return 0;
+}
+
+int _nk_style_pop_text_color(lua_State *L) {
+    nk_style_pop_color(engine_context->nk_ctx);
+    return 0;
+}
+
 int _nk_group_begin(lua_State *L) {
     const char *name = luaL_checkstring(L, 1);
     int flags = luaL_checkinteger(L, 2);
@@ -596,6 +629,64 @@ int _generate_uuid(lua_State *L) {
     return 1;
 }
 
+typedef struct {
+    int ws_id;
+    char room[256];
+
+    lua_State *L;
+    int lua_callback_ref;
+} lua_room_check_ctx;
+
+static void lua_room_exists_callback(int exists, void *ptr) {
+    lua_room_check_ctx *ctx = (lua_room_check_ctx *)ptr;
+
+    lua_State *L = ctx->L;
+
+    lua_rawgeti(L, LUA_REGISTRYINDEX, ctx->lua_callback_ref);
+
+    lua_pushinteger(L, exists);
+
+    if (lua_pcall(L, 1, 0, 0) != LUA_OK) {
+        const char *err = lua_tostring(L, -1);
+        printf("Lua callback error: %s\n", err);
+        lua_pop(L, 1);
+    }
+
+    luaL_unref(L, LUA_REGISTRYINDEX, ctx->lua_callback_ref);
+
+    free(ctx);
+}
+
+int _rtc_check_room_exists(lua_State *L) {
+    const char *ws_url = luaL_checkstring(L, 1);
+    const char *user = luaL_checkstring(L, 2);
+    const char *room = luaL_checkstring(L, 3);
+
+    luaL_checktype(L, 4, LUA_TFUNCTION);
+
+    // Store Lua callback
+    lua_pushvalue(L, 4);
+    int cb_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+
+    lua_room_check_ctx *ctx = malloc(sizeof(lua_room_check_ctx));
+    memset(ctx, 0, sizeof(lua_room_check_ctx));
+
+    ctx->L = L;
+    ctx->lua_callback_ref = cb_ref;
+
+    strncpy(ctx->room, room, sizeof(ctx->room) - 1);
+
+    rtc_check_room_exists_ws(
+        ws_url,
+        user,
+        room,
+        lua_room_exists_callback,
+        ctx
+    );
+
+    return 0; // async → no return value
+}
+
 static char *ice_servers[MAX_SERVERS] = { "stun:stun.l.google.com:19302" };
 static int count = 1;
 static char *ws_url, *username, *room;
@@ -687,7 +778,7 @@ void msgReceiveCb(int id, const char *message, int size, void *ptr) {
         lua_rawgeti(engine_context->L, LUA_REGISTRYINDEX, msgReceiveCb_ref);
 
         lua_pushinteger(engine_context->L, id);
-        lua_pushstring(engine_context->L, message);
+        lua_pushlstring(engine_context->L, message, (size_t)size);
         lua_pushinteger(engine_context->L, size);
         lua_pushlightuserdata(engine_context->L, ptr);
 
@@ -1057,9 +1148,10 @@ static Rectangle luaL_checkrectangle(lua_State *L, int arg) {
     lua_getfield(L, arg, "width");
     lua_getfield(L, arg, "height");
 
-    Rectangle rectangle = { luaL_checkinteger(L, -4), luaL_checkinteger(L, -3),
-                            luaL_checkinteger(L, -2),
-                            luaL_checkinteger(L, -1) };
+    Rectangle rectangle = { (float)luaL_checknumber(L, -4),
+                            (float)luaL_checknumber(L, -3),
+                            (float)luaL_checknumber(L, -2),
+                            (float)luaL_checknumber(L, -1) };
 
     lua_pop(L, 4);
 
@@ -1071,7 +1163,8 @@ static Vector2 luaL_checkvector2(lua_State *L, int arg) {
     lua_getfield(L, arg, "x");
     lua_getfield(L, arg, "y");
 
-    Vector2 vector = { luaL_checkinteger(L, -2), luaL_checkinteger(L, -1) };
+    Vector2 vector = { (float)luaL_checknumber(L, -2),
+                       (float)luaL_checknumber(L, -1) };
 
     lua_pop(L, 2);
 

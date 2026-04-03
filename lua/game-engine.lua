@@ -163,5 +163,11 @@ function EMSCRIPTEN_readdir(path) end
 ---
 function engine_is_file_or_directory(path) end
 
+---
+---Returns current mouse position
+---@return Vector2
+---
+function mouse_pos() end
+
 EMSCRIPTEN = EMSCRIPTEN or false
 WIN32 = WIN32 or false

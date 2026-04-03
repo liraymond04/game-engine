@@ -44,6 +44,8 @@ int _nk_color_picker(lua_State *L);
 int _nk_propertyf(lua_State *L);
 int _nk_style_default(lua_State *L);
 int _nk_style_from_table(lua_State *L);
+int _nk_style_push_text_color(lua_State *L);
+int _nk_style_pop_text_color(lua_State *L);
 int _nk_group_begin(lua_State *L);
 int _nk_group_end(lua_State *L);
 int _nk_group_get_scroll(lua_State *L);
@@ -55,6 +57,7 @@ int _nk_input_is_key_pressed(lua_State *L);
 
 /* RTC Handler */
 int _generate_uuid(lua_State *L);
+int _rtc_check_room_exists(lua_State *L);
 int _rtc_initialize(lua_State *L);
 int _rtc_handle_connection(lua_State *L);
 int _rtc_cleanup(lua_State *L);
@@ -94,5 +97,6 @@ int _audio_group_get_volume(lua_State *L);
 int _audio_group_set_volume(lua_State *L);
 int _EMSCRIPTEN_readdir(lua_State *L);
 int _engine_is_file_or_directory(lua_State *L);
+int _mouse_pos(lua_State *L);
 
 #endif // !ENGINE_BINDINGS

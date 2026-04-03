@@ -198,6 +198,17 @@ function nk_style_default() end
 ---
 function nk_style_from_table(table) end
 
+---
+---Function to push text color to current context style
+---@param color Color
+---
+function nk_style_push_text_color(color) end
+
+---
+---Function to pop text color from current context style
+---
+function nk_style_pop_text_color() end
+
 function nk_group_begin(name, flags) end
 function nk_group_end() end
 function nk_group_get_scroll(name) end

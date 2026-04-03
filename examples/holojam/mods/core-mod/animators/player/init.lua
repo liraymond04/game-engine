@@ -1,37 +1,37 @@
-local player_animator = Animator.new("Player")
+local player_animator = {}
 
 player_animator.Init = function(self)
-  self.w = 100
-  self.h = 100
+  local animator = Animator.new("Player")
 
-  self:LoadResource("assets/player/char_blue_1.png")
-  self:LoadResource("assets/sounds/coin.wav", audio_group_get(0))
-  self:LoadAnim(import("idle"))
-  self:LoadAnim(import("walk"))
+  animator.w = 100
+  animator.h = 100
 
-  self.current_state = "idle"
-  self.state.moving = false
-  self.state.facing_right = true
+  animator:LoadResource("assets/player/char_blue_1.png")
+  animator:LoadResource("assets/sounds/coin.wav", audio_group_get(0))
+  animator:LoadAnim(import("idle")())
+  animator:LoadAnim(import("walk")())
 
-  return self
-end
+  animator.current_state = "idle"
+  animator.state.moving = false
+  animator.state.facing_right = true
 
-player_animator.Before = function(self)
-  if self.state.moving == false then
-    self:ChangeState("idle")
-  else
-    self:ChangeState("walk")
+  animator.Before = function(a)
+    if a.state.moving == false then
+      a:ChangeState("idle")
+    else
+      a:ChangeState("walk")
+    end
   end
-end
 
-player_animator.state_enter["idle"] = function(self)
-  -- print('enter idle')
-  self.anims["idle"].current_frame = 1
-end
+  animator.state_enter["idle"] = function(a)
+    a.anims["idle"].current_frame = 1
+  end
 
-player_animator.state_enter["walk"] = function(self)
-  -- print('enter walk')
-  self.anims["walk"].current_frame = 1
+  animator.state_enter["walk"] = function(a)
+    a.anims["walk"].current_frame = 1
+  end
+
+  return animator
 end
 
 return player_animator

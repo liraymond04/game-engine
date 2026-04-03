@@ -19,6 +19,10 @@
 #endif
 
 void generate_uuid(char out[UUID_STR_LEN]);
+void rtc_check_room_exists_ws(const char *ws_url, const char *user,
+                              const char *room,
+                              void (*callback)(int exists, void *ptr),
+                              void *ptr);
 void rtc_initialize(const char **stun_servers, int stun_servers_count,
                     const char *ws_url, const char *username, const char *room,
                     pthread_mutex_t *lock, pthread_cond_t *cond, int *ws_joined,
