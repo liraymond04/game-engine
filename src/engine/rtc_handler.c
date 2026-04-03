@@ -33,10 +33,13 @@ static void (*message_received_callback)(int id, const char *message, int size,
                                          void *ptr) = NULL;
 static void (*message_closed_callback)(int id, void *ptr) = NULL;
 
+typedef struct room_check_ctx room_check_ctx;
+
 typedef enum {
     RTC_CB_OPEN,
     RTC_CB_MESSAGE,
     RTC_CB_CLOSE,
+    RTC_CB_ROOM_CHECK,
 } rtc_callback_type;
 
 typedef struct rtc_callback_event {
@@ -200,7 +203,7 @@ EM_BOOL onmessage(int eventType,
 }
 #endif
 
-typedef struct {
+struct room_check_ctx {
     int ws_id;
     char room[256];
     int result; // -1 = unknown, 0 = no, 1 = yes
@@ -211,7 +214,7 @@ typedef struct {
     pthread_mutex_t mutex;
     pthread_cond_t cond;
     int done;
-} room_check_ctx;
+};
 
 static void wait_for_ws_close() {
     if (!lock) return; // safety check
@@ -275,15 +278,7 @@ static void rc_onClosed(int id, void *ptr) {
     pthread_cond_signal(&ctx->cond);
     pthread_mutex_unlock(&ctx->mutex);
 
-    if (ctx->callback) {
-        int result;
-        pthread_mutex_lock(&ctx->mutex);
-        result = ctx->result;
-        pthread_mutex_unlock(&ctx->mutex);
-        ctx->callback(result, ctx->user_ptr);
-    }
-
-    free(ctx);
+    queue_callback_event(RTC_CB_ROOM_CHECK, id, NULL, 0, ctx);
 }
 
 void rtc_check_room_exists_ws(const char *ws_url,
@@ -591,6 +586,18 @@ void rtc_process_callbacks() {
                 message_closed_callback(event->id, event->ptr);
             }
             break;
+        case RTC_CB_ROOM_CHECK: {
+            room_check_ctx *ctx = (room_check_ctx *)event->ptr;
+            if (ctx && ctx->callback) {
+                int result;
+                pthread_mutex_lock(&ctx->mutex);
+                result = ctx->result;
+                pthread_mutex_unlock(&ctx->mutex);
+                ctx->callback(result, ctx->user_ptr);
+            }
+            free(ctx);
+            break;
+        }
         }
 
         free(event->message);

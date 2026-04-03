@@ -8,6 +8,28 @@ local function lerp(a, b, t)
     return a + (b - a) * t
 end
 
+local function hermite(p0, p1, m0, m1, t)
+    local t2 = t * t
+    local t3 = t2 * t
+
+    local h00 = 2 * t3 - 3 * t2 + 1
+    local h10 = t3 - 2 * t2 + t
+    local h01 = -2 * t3 + 3 * t2
+    local h11 = t3 - t2
+
+    return h00 * p0 + h10 * m0 + h01 * p1 + h11 * m1
+end
+
+local function clamp01(t)
+    if t < 0 then
+        return 0
+    elseif t > 1 then
+        return 1
+    end
+
+    return t
+end
+
 local function network_now()
     if type(GetTime) == "function" then
         return GetTime()
@@ -70,8 +92,18 @@ function net_interpolate_system:update()
                 t = 1
             end
 
-            e.position.x = lerp(a.x, b.x, t)
-            e.position.y = lerp(a.y, b.y, t)
+            local dt = denom
+            local ax = a.vx or 0
+            local ay = a.vy or 0
+            local bx = b.vx or 0
+            local by = b.vy or 0
+
+            -- Tangents are scaled conservatively so we keep the shape of the
+            -- motion without overshooting on abrupt network updates.
+            local tangent_scale = math.max(0.25, math.min(1.0, dt * 20))
+
+            e.position.x = hermite(a.x, b.x, ax * dt * tangent_scale, bx * dt * tangent_scale, t)
+            e.position.y = hermite(a.y, b.y, ay * dt * tangent_scale, by * dt * tangent_scale, t)
 
             local dx = b.x - a.x
             local dy = b.y - a.y

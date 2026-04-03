@@ -10,7 +10,11 @@ end)
 
 RegisterFunction("HOOK_LOBBY_MENU_PROCESS_INPUT", function() end)
 
-RegisterFunction("HOOK_LOBBY_MENU_UPDATE", function() end)
+RegisterFunction("HOOK_LOBBY_MENU_UPDATE", function()
+  if rtc_process_callbacks then
+    rtc_process_callbacks()
+  end
+end)
 
 LOBBY_DATA = {
   action = "",
