@@ -4,7 +4,7 @@ local net_sync_system = ECS.system({
 
 net_sync_system.priority = 13
 
-local SEND_INTERVAL = 1 / 30
+local SEND_INTERVAL = 1 / 60
 local POSITION_EPSILON = 0.05
 local VELOCITY_EPSILON = 0.01
 

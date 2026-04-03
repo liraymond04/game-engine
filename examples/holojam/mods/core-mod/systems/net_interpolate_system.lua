@@ -30,6 +30,27 @@ local function clamp01(t)
     return t
 end
 
+local function clamp(x, min_value, max_value)
+    if x < min_value then
+        return min_value
+    elseif x > max_value then
+        return max_value
+    end
+
+    return x
+end
+
+local function get_frame_dt()
+    if type(GetFrameTime) == "function" then
+        local dt = GetFrameTime()
+        if type(dt) == "number" and dt > 0 then
+            return dt
+        end
+    end
+
+    return 1 / 60
+end
+
 local function network_now()
     if type(GetTime) == "function" then
         return GetTime()
@@ -38,8 +59,18 @@ local function network_now()
     return os.clock()
 end
 
+local function motion_magnitude(vx, vy)
+    return math.abs(vx or 0) + math.abs(vy or 0)
+end
+
+local STOP_THRESHOLD = 0.06
+local START_THRESHOLD = 0.14
+local MOVE_HOLD_TIME = 0.12
+local IDLE_HOLD_TIME = 0.08
+
 function net_interpolate_system:update()
     local now = network_now()
+    local dt = get_frame_dt()
 
     for _, e in ipairs(self.pool) do
         ---@type Animator
@@ -72,6 +103,14 @@ function net_interpolate_system:update()
         end
 
         local render_t = now - e.net_snapshots.interpolation_delay
+        local prev_x = e.position.x
+        local prev_y = e.position.y
+        local target_x = e.position.x
+        local target_y = e.position.y
+        local target_vx = 0
+        local target_vy = 0
+        local target_facing_right = animator.state.facing_right
+        local target_moving = false
 
         while #snapshots >= 2 and snapshots[2].t <= render_t do
             table.remove(snapshots, 1)
@@ -86,11 +125,7 @@ function net_interpolate_system:update()
                 t = (render_t - a.t) / denom
             end
 
-            if t < 0 then
-                t = 0
-            elseif t > 1 then
-                t = 1
-            end
+            t = clamp01(t)
 
             local dt = denom
             local ax = a.vx or 0
@@ -102,25 +137,56 @@ function net_interpolate_system:update()
             -- motion without overshooting on abrupt network updates.
             local tangent_scale = math.max(0.25, math.min(1.0, dt * 20))
 
-            e.position.x = hermite(a.x, b.x, ax * dt * tangent_scale, bx * dt * tangent_scale, t)
-            e.position.y = hermite(a.y, b.y, ay * dt * tangent_scale, by * dt * tangent_scale, t)
+            target_x = hermite(a.x, b.x, ax * dt * tangent_scale, bx * dt * tangent_scale, t)
+            target_y = hermite(a.y, b.y, ay * dt * tangent_scale, by * dt * tangent_scale, t)
+            target_vx = lerp(ax, bx, t)
+            target_vy = lerp(ay, by, t)
 
-            local dx = b.x - a.x
-            local dy = b.y - a.y
-            if math.abs(dx) > 0.001 then
-                animator.state.facing_right = dx > 0
+            if b.facing_right ~= nil then
+                target_facing_right = b.facing_right
+            elseif math.abs(target_vx) > 0.001 then
+                target_facing_right = target_vx > 0
             end
-            animator.state.moving = (math.abs(dx) + math.abs(dy)) > 0.001 or b.moving == true
         elseif #snapshots == 1 then
             local s = snapshots[1]
-            e.position.x = s.x
-            e.position.y = s.y
+            local age = now - s.t
+            local extrapolation_limit = 0.12
+            local extra = clamp(age, 0, extrapolation_limit)
 
-            if s.facing_right ~= nil then
-                animator.state.facing_right = s.facing_right
-            end
-            animator.state.moving = s.moving == true
+            target_x = s.x + (s.vx or 0) * extra
+            target_y = s.y + (s.vy or 0) * extra
+            target_vx = s.vx or 0
+            target_vy = s.vy or 0
+            target_facing_right = s.facing_right ~= nil and s.facing_right or target_facing_right
+        elseif #snapshots == 0 then
+            goto continue
         end
+
+        local smooth = math.min(1, dt * 16)
+        e.position.x = lerp(e.position.x, target_x, smooth)
+        e.position.y = lerp(e.position.y, target_y, smooth)
+
+        local visible_motion = motion_magnitude(e.position.x - prev_x, e.position.y - prev_y)
+        local visible_speed = visible_motion / math.max(dt, 1 / 120)
+
+        if math.abs(target_vx) > 0.001 then
+            target_facing_right = target_vx > 0
+        end
+
+        if visible_speed >= START_THRESHOLD then
+            target_moving = true
+        elseif visible_speed <= STOP_THRESHOLD then
+            target_moving = false
+        end
+
+        -- Final clamp: if the visible sprite barely moved this frame, do not
+        -- keep the running animation alive unless motion is clearly present.
+        if visible_speed < STOP_THRESHOLD then
+            target_moving = false
+        end
+
+        animator.state.facing_right = target_facing_right
+        animator.state.moving = target_moving
 
         ::continue::
     end

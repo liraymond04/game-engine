@@ -512,45 +512,34 @@ static inline void onDataChannelOpen(int id, void *ptr) {
     dataChannel[dataChannelCount++] = id;
     messageListener = 0;
 
-    if (message_opened_callback) {
-        message_opened_callback(id, ptr);
-    }
+    queue_callback_event(RTC_CB_OPEN, id, NULL, 0, ptr);
 }
 
 static inline void onDataChannelMessage(int id, const char *message, int size,
                                         void *ptr) {
     DEBUG_PRINT("\nData channel received (%d bytes): %.*s\n", size, size,
                 message ? message : "");
-    if (message_received_callback) {
-        char *safe = malloc((size_t)size + 1);
-        if (!safe) {
-            return;
-        }
 
-        memcpy(safe, message, (size_t)size);
-        safe[size] = '\0';
-
-        message_received_callback(id, safe, size, ptr);
-        free(safe);
-    }
+    queue_callback_event(RTC_CB_MESSAGE, id, message, size, ptr);
 }
 
 static inline void onDataChannelClose(int id, void *ptr) {
     DEBUG_PRINT("\nData channel closed\n");
     int found = 0;
     for (int i = 0; i < dataChannelCount - 1; i++) {
-    queue_callback_event(RTC_CB_OPEN, id, NULL, 0, ptr);
+        if (dataChannel[i] == id)
+            found = 1;
+        if (found)
             dataChannel[i] = dataChannel[i + 1];
     }
-    dataChannelCount--;
+
+    if (dataChannelCount > 0) {
+        dataChannelCount--;
+    }
     messageListener = 0;
 
-    queue_callback_event(RTC_CB_MESSAGE, id, message, size, ptr);
-        sendOneToOneNegotiation("candidate", requestee, cand);
-    }
-}
     queue_callback_event(RTC_CB_CLOSE, id, NULL, 0, ptr);
-
+}
 
 void rtc_process_callbacks() {
     while (1) {
@@ -604,6 +593,19 @@ void rtc_process_callbacks() {
         free(event);
     }
 }
+
+static inline void candidateConnectPeersCallback(int pc, const char *cand,
+                                                 const char *mid, void *ptr) {
+    const char *requestee = (const char *)ptr;
+    if (cand != NULL) {
+        DEBUG_PRINT("sent negotiations\n");
+        sendOneToOneNegotiation("candidate", requestee, cand);
+    }
+}
+
+static void connectPeers(json_object *root) {
+    DEBUG_PRINT("CONNECTING PEERS\n");
+
     json_object *data = json_object_object_get(root, "data");
 
     int pc = rtcCreatePeerConnection(&config);

@@ -69,33 +69,41 @@ function networking.send_message(payload)
 end
 
 local function json_unescape(str)
-  local out = {}
+  if type(str) ~= "string" then
+    return nil
+  end
+
+  local out = ""
   local i = 1
   while i <= #str do
     local c = str:sub(i, i)
     if c == "\\" then
       local n = str:sub(i + 1, i + 1)
       if n == "\"" or n == "\\" or n == "/" then
-        table.insert(out, n)
+        out = out .. n
       elseif n == "n" then
-        table.insert(out, "\n")
+        out = out .. "\n"
       elseif n == "r" then
-        table.insert(out, "\r")
+        out = out .. "\r"
       elseif n == "t" then
-        table.insert(out, "\t")
+        out = out .. "\t"
       else
-        table.insert(out, n)
+        out = out .. n
       end
       i = i + 2
     else
-      table.insert(out, c)
+      out = out .. c
       i = i + 1
     end
   end
-  return table.concat(out)
+  return out
 end
 
 local function extract_json_string_field(src, field)
+  if type(src) ~= "string" then
+    return nil
+  end
+
   local key = "\"" .. field .. "\""
   local key_start = src:find(key, 1, true)
   if not key_start then
@@ -112,20 +120,19 @@ local function extract_json_string_field(src, field)
     return nil
   end
 
-  local out = {}
+  local out = ""
   local escape = false
   for i = first_quote + 1, #src do
     local ch = src:sub(i, i)
     if escape then
-      table.insert(out, "\\")
-      table.insert(out, ch)
+      out = out .. "\\" .. ch
       escape = false
     elseif ch == "\\" then
       escape = true
     elseif ch == "\"" then
-      return table.concat(out)
+      return out
     else
-      table.insert(out, ch)
+      out = out .. ch
     end
   end
 
@@ -192,6 +199,11 @@ local function parse_lua_payload(src)
 end
 
 local function parse_network_message(message)
+  if type(message) ~= "string" then
+    print("network parse error: non-string message: " .. tostring(message))
+    return nil
+  end
+
   local payload_src = message
   local sender = nil
 
@@ -223,6 +235,9 @@ local function ensure_network_player(req)
   local entity = NETWORK_PLAYER_ENTITIES[req.uuid]
   if entity then
     local remote = NETWORK_PLAYERS[req.uuid]
+    if req.username and entity.network_player then
+      entity.network_player.username = req.username
+    end
     if remote then
       remote.username = req.username or remote.username
       remote.last_seen_t = network_now()
@@ -237,7 +252,7 @@ local function ensure_network_player(req)
   entity = ECS.entity(networking.world)
   entity
       :give("network_player", req.uuid, req.username)
-      :give("net_snapshots", 32, 0.12)
+      :give("net_snapshots", 32, 0.06)
       :give("animator", import("animators/player"):Init())
       :give("position", req.x or 0, req.y or 0)
       :give("velocity", req.vx or 0, req.vy or 0)
