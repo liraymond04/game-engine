@@ -179,12 +179,16 @@ static void rc_onOpen(int id, void *ptr) {
 
     const char *msg = json_object_to_json_string(root);
     rtcSendMessage(id, msg, strlen(msg));
+    json_object_put(root);
 }
 
 static void rc_onMessage(int id, const char *message, int size, void *ptr) {
     room_check_ctx *ctx = (room_check_ctx *)ptr;
 
     json_object *root = json_tokener_parse(message);
+    if (!root) {
+        return;
+    }
     json_object *type = json_object_object_get(root, "type");
     const char *type_str = json_object_get_string(type);
 
@@ -196,6 +200,8 @@ static void rc_onMessage(int id, const char *message, int size, void *ptr) {
 
         rtcDeleteWebSocket(id);
     }
+
+    json_object_put(root);
 }
 
 static void rc_onError(int id, const char *error, void *ptr) {
@@ -221,6 +227,8 @@ static void rc_onClosed(int id, void *ptr) {
         pthread_mutex_unlock(&ctx->mutex);
         ctx->callback(result, ctx->user_ptr);
     }
+
+    free(ctx);
 }
 
 void rtc_check_room_exists_ws(const char *ws_url,
@@ -229,9 +237,13 @@ void rtc_check_room_exists_ws(const char *ws_url,
                               void (*callback)(int exists, void *ptr),
                               void *ptr) {
     room_check_ctx *ctx = malloc(sizeof(room_check_ctx));
+    if (!ctx) {
+        return;
+    }
     memset(ctx, 0, sizeof(room_check_ctx));
 
     strncpy(ctx->room, room, sizeof(ctx->room) - 1);
+    ctx->room[sizeof(ctx->room) - 1] = '\0';
     ctx->callback = callback;
     ctx->user_ptr = ptr;
 
@@ -270,8 +282,8 @@ void rtc_initialize(const char **stun_servers, int stun_servers_count,
     config.iceServers = stun_servers;
     config.iceServersCount = stun_servers_count;
 
-    strcpy(username, user);
-    strcpy(room, rm);
+    snprintf(username, sizeof(username), "%s", user);
+    snprintf(room, sizeof(room), "%s", rm);
 
     lock = lck;
     cond = cnd;

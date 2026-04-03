@@ -73,6 +73,8 @@ void Engine_RunHook(Engine_t *engine, const char *hook_name) {
             fprintf(stderr, "No Lua function reference saved.\n");
         }
     }
+
+    zfree_iterator(iterator);
 }
 
 const char *get_current_file_name(lua_State *L) {
@@ -182,6 +184,8 @@ static void watch_callback(dmon_watch_id watch_id, dmon_action action,
         }
     }
 
+    zfree_iterator(hook_iterator);
+
     bool result = Engine_RunLuaScript(cur_engine, init_path);
 }
 #endif
@@ -228,6 +232,7 @@ bool LoadModsRecurse(Engine_t *engine, const char *mods_dir,
     if (dependencies != NULL) {
         if (json_object_get_type(dependencies) != json_type_array) {
             fprintf(stderr, "Error: expected dependencies to be an array\n");
+            json_object_put(root);
             return false;
         }
 
@@ -238,15 +243,18 @@ bool LoadModsRecurse(Engine_t *engine, const char *mods_dir,
                 json_object_array_get_idx(dependencies, i));
 
             if (!LoadModsRecurse(engine, mods_dir, dependency)) {
+                json_object_put(root);
                 return false;
             }
         }
     }
 
     char mod_dir[PATH_MAX];
-    snprintf(mod_dir, sizeof(manifest_path), "%s/%s", mods_dir, mod_name);
+    snprintf(mod_dir, sizeof(mod_dir), "%s/%s", mods_dir, mod_name);
 
-    return LoadMod(engine, mod_dir, mod_name);
+    bool result = LoadMod(engine, mod_dir, mod_name);
+    json_object_put(root);
+    return result;
 }
 
 void Engine_LoadMods(Engine_t *engine) {
@@ -283,8 +291,12 @@ void Engine_CloseLua(Engine_t *engine) {
             luaL_unref(engine->L, LUA_REGISTRYINDEX, lua_function_ref);
         }
 
+        zfree_iterator(iterator);
+
         Hook_free(hook);
     }
+
+    zfree_iterator(hook_iterator);
     zfree_sorted_hash_table(cur_engine->hooks);
 
 #ifndef __EMSCRIPTEN__

@@ -63,11 +63,14 @@ void Engine_ResourceGroup_Clear(Engine_t *engine, int group) {
 
 void Engine_InitRRESFile(Engine_t *engine, const char *rres_file_path) {
     char rres_file_path_full[PATH_MAX];
-    sprintf(rres_file_path_full, RRES_PATH "%s", rres_file_path);
-    strcpy(engine->rres_file, rres_file_path_full);
+    snprintf(rres_file_path_full, sizeof(rres_file_path_full),
+             RRES_PATH "%s", rres_file_path);
+    snprintf(engine->rres_file, sizeof(engine->rres_file), "%s",
+             rres_file_path_full);
     // Read data JSON
     char json_file[PATH_MAX];
-    sprintf(json_file, RRES_PATH "%s.json", rres_file_path);
+    snprintf(json_file, sizeof(json_file), RRES_PATH "%s.json",
+             rres_file_path);
     engine->rres_info = json_object_from_file(json_file);
 }
 
@@ -79,7 +82,7 @@ int Engine_LoadResource(Engine_t *engine, const char *resource_path, int group,
     }
 
     char filepath[PATH_MAX];
-    strcpy(filepath, resource_path);
+    snprintf(filepath, sizeof(filepath), "%s", resource_path);
 
     char *token;
 
@@ -123,11 +126,15 @@ int Engine_LoadResource(Engine_t *engine, const char *resource_path, int group,
         break;
     case FILETYPE_IMGE:
         *out = malloc(sizeof(Texture2D));
-        ret = Engine_LoadTexture2D(engine, id, *out);
+        if (*out != NULL) {
+            ret = Engine_LoadTexture2D(engine, id, *out);
+        }
         break;
     case FILETYPE_WAVE:
         *out = malloc(sizeof(Sound));
-        ret = Engine_LoadSound(engine, id, *out);
+        if (*out != NULL) {
+            ret = Engine_LoadSound(engine, id, *out);
+        }
         break;
     default:
         break;
@@ -144,54 +151,49 @@ int Engine_LoadResource(Engine_t *engine, const char *resource_path, int group,
 int Engine_LoadTextFile(Engine_t *engine, int id, char **out) {
     rresResourceChunk chunk = rresLoadResourceChunk(engine->rres_file, id);
 
-    int result = UnpackResourceChunk(
-        &chunk); // Decompres/decipher resource data (if required)
-
-    if (result == 0) // Data decompressed/decrypted successfully
-    {
-        *out = LoadTextFromResource(
-            chunk); // Load text data, must be freed at the end
-    } else {
+    int result = UnpackResourceChunk(&chunk);
+    if (result != 0) {
+        rresUnloadResourceChunk(chunk);
         return 0;
     }
 
+    *out = LoadTextFromResource(chunk);
     rresUnloadResourceChunk(chunk);
 
     return 1;
 }
 
 int Engine_LoadTexture2D(Engine_t *engine, int id, Texture2D *out) {
-    Texture2D texture;
     rresResourceChunk chunk = rresLoadResourceChunk(engine->rres_file, id);
 
     int result = UnpackResourceChunk(&chunk);
 
     // failed loading or unpacking
     if (result != RRES_SUCCESS) {
+        rresUnloadResourceChunk(chunk);
         return 0;
     }
 
     Image image = LoadImageFromResource(chunk);
     *out = LoadTextureFromImage(image);
     UnloadImage(image);
+    rresUnloadResourceChunk(chunk);
 
     return 1;
 }
 
 int Engine_LoadSound(Engine_t *engine, int id, Sound *out) {
     rresResourceChunk chunk = rresLoadResourceChunk(engine->rres_file, id);
-    int result = UnpackResourceChunk(
-        &chunk); // Decompres/decipher resource data (if required)
+    int result = UnpackResourceChunk(&chunk);
 
-    if (result == 0) // Data decompressed/decrypted successfully
-    {
-        Wave wave = LoadWaveFromResource(chunk);
-        *out = LoadSoundFromWave(wave);
-        UnloadWave(wave);
-    } else {
+    if (result != 0) {
+        rresUnloadResourceChunk(chunk);
         return 0;
     }
 
+    Wave wave = LoadWaveFromResource(chunk);
+    *out = LoadSoundFromWave(wave);
+    UnloadWave(wave);
     rresUnloadResourceChunk(chunk);
 
     return 1;

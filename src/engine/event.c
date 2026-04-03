@@ -31,6 +31,11 @@ void event_system_free() {
         vec_deinit(events);
         free(events);
     }
+
+    zfree_iterator(iterator);
+    zfree_sorted_hash_table(state.registered_events);
+    state.registered_events = NULL;
+    is_initialized = false;
 }
 
 bool event_register(const char *type, void *listener, event_callback_t on_event,
@@ -38,9 +43,13 @@ bool event_register(const char *type, void *listener, event_callback_t on_event,
     if (!is_initialized)
         return false;
 
-    vec_event_t *events = (vec_event_t *)malloc(sizeof(vec_event_t));
+    vec_event_t *events = NULL;
 
     if (!zsorted_hash_exists(state.registered_events, (char *)type)) {
+        events = (vec_event_t *)malloc(sizeof(vec_event_t));
+        if (events == NULL) {
+            return false;
+        }
         vec_init(events);
         zsorted_hash_set(state.registered_events, (char *)type, events);
     } else {
@@ -123,6 +132,7 @@ bool event_fire(const char *type, void *sender, event_context_t event_context,
                 lua_pop(engine_context->L, 1); // Pop the error message
             }
             bool result = lua_toboolean(engine_context->L, -1);
+            lua_pop(engine_context->L, 1);
             if (result) {
                 return true;
             }

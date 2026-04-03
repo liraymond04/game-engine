@@ -11,7 +11,11 @@ extern void Cleanup(Engine_t *engine);
 
 void Engine_Scene_Load(Engine_t *engine, const char *scene_path) {
     if (engine->current_scene == NULL) {
-        engine->current_scene = (Scene_t *)malloc(sizeof(Scene_t));
+        engine->current_scene = (Scene_t *)calloc(1, sizeof(Scene_t));
+        if (engine->current_scene == NULL) {
+            fprintf(stderr, "Error allocating scene\n");
+            exit(EXIT_FAILURE);
+        }
     }
 
     Scene_t *scene = engine->current_scene;
@@ -57,24 +61,28 @@ void Engine_Scene_Load(Engine_t *engine, const char *scene_path) {
 }
 
 void Engine_Scene_Switch(Engine_t *engine, const char *new_scene_path) {
-    Scene_t *scene = engine->current_scene;
-
-    scene->interface.Cleanup(engine);
+    if (engine->current_scene != NULL) {
+        engine->current_scene->interface.Cleanup(engine);
+    }
 
     Engine_Scene_Load(engine, new_scene_path);
 
-    scene->interface.Init(engine);
+    engine->current_scene->interface.Init(engine);
 }
 
 void Engine_Mod_Scene_Load(Engine_t *engine, const char *scene_path,
                            const char *scene_name) {
     Engine_Scene_Load(engine, scene_path);
-    strcpy(engine->current_scene->scene_name, scene_name);
+    snprintf(engine->current_scene->scene_name,
+             sizeof(engine->current_scene->scene_name), "%s", scene_name);
 }
 
 void Engine_Mod_Scene_Switch(Engine_t *engine, const char *scene_name) {
-    Scene_t *scene = engine->current_scene;
-    scene->interface.Cleanup(engine);
-    strcpy(scene->scene_name, scene_name);
-    scene->interface.Init(engine);
+    if (engine->current_scene != NULL) {
+        engine->current_scene->interface.Cleanup(engine);
+        snprintf(engine->current_scene->scene_name,
+                 sizeof(engine->current_scene->scene_name), "%s",
+                 scene_name);
+        engine->current_scene->interface.Init(engine);
+    }
 }
