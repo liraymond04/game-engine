@@ -1,5 +1,6 @@
 #include "rtc_handler.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 #define MAX_PEERS 3
 
@@ -31,6 +32,60 @@ static void (*message_opened_callback)(int id, void *ptr) = NULL;
 static void (*message_received_callback)(int id, const char *message, int size,
                                          void *ptr) = NULL;
 static void (*message_closed_callback)(int id, void *ptr) = NULL;
+
+typedef enum {
+    RTC_CB_OPEN,
+    RTC_CB_MESSAGE,
+    RTC_CB_CLOSE,
+} rtc_callback_type;
+
+typedef struct rtc_callback_event {
+    rtc_callback_type type;
+    int id;
+    int size;
+    char *message;
+    void *ptr;
+    struct rtc_callback_event *next;
+} rtc_callback_event;
+
+static pthread_mutex_t callback_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
+static rtc_callback_event *callback_queue_head = NULL;
+static rtc_callback_event *callback_queue_tail = NULL;
+
+static void queue_callback_event(rtc_callback_type type, int id,
+                                 const char *message, int size, void *ptr) {
+    rtc_callback_event *event = malloc(sizeof(rtc_callback_event));
+    if (!event) {
+        return;
+    }
+
+    event->type = type;
+    event->id = id;
+    event->size = size;
+    event->ptr = ptr;
+    event->next = NULL;
+    event->message = NULL;
+
+    if (message && size > 0) {
+        event->message = malloc((size_t)size + 1);
+        if (!event->message) {
+            free(event);
+            return;
+        }
+
+        memcpy(event->message, message, (size_t)size);
+        event->message[size] = '\0';
+    }
+
+    pthread_mutex_lock(&callback_queue_mutex);
+    if (callback_queue_tail) {
+        callback_queue_tail->next = event;
+    } else {
+        callback_queue_head = event;
+    }
+    callback_queue_tail = event;
+    pthread_mutex_unlock(&callback_queue_mutex);
+}
 
 static bool shouldRespond(json_object *root);
 static void sendNegotiation(const char *type, json_object *data);
@@ -489,31 +544,59 @@ static inline void onDataChannelClose(int id, void *ptr) {
     DEBUG_PRINT("\nData channel closed\n");
     int found = 0;
     for (int i = 0; i < dataChannelCount - 1; i++) {
-        if (dataChannel[i] == id)
-            found = 1;
-        if (found)
+    queue_callback_event(RTC_CB_OPEN, id, NULL, 0, ptr);
             dataChannel[i] = dataChannel[i + 1];
     }
     dataChannelCount--;
     messageListener = 0;
 
-    if (message_closed_callback) {
-        message_closed_callback(id, ptr);
-    }
-}
-
-static inline void candidateConnectPeersCallback(int pc, const char *cand,
-                                                 const char *mid, void *ptr) {
-    const char *requestee = (const char *)ptr;
-    if (cand != NULL) {
-        DEBUG_PRINT("sent negotiations\n");
+    queue_callback_event(RTC_CB_MESSAGE, id, message, size, ptr);
         sendOneToOneNegotiation("candidate", requestee, cand);
     }
 }
+    queue_callback_event(RTC_CB_CLOSE, id, NULL, 0, ptr);
 
-static void connectPeers(json_object *root) {
-    DEBUG_PRINT("CONNECTING PEERS\n");
 
+void rtc_process_callbacks() {
+    while (1) {
+        pthread_mutex_lock(&callback_queue_mutex);
+        rtc_callback_event *event = callback_queue_head;
+        if (event) {
+            callback_queue_head = event->next;
+            if (!callback_queue_head) {
+                callback_queue_tail = NULL;
+            }
+        }
+        pthread_mutex_unlock(&callback_queue_mutex);
+
+        if (!event) {
+            break;
+        }
+
+        switch (event->type) {
+        case RTC_CB_OPEN:
+            if (message_opened_callback) {
+                message_opened_callback(event->id, event->ptr);
+            }
+            break;
+        case RTC_CB_MESSAGE:
+            if (message_received_callback) {
+                message_received_callback(event->id,
+                                         event->message ? event->message : "",
+                                         event->size, event->ptr);
+            }
+            break;
+        case RTC_CB_CLOSE:
+            if (message_closed_callback) {
+                message_closed_callback(event->id, event->ptr);
+            }
+            break;
+        }
+
+        free(event->message);
+        free(event);
+    }
+}
     json_object *data = json_object_object_get(root, "data");
 
     int pc = rtcCreatePeerConnection(&config);

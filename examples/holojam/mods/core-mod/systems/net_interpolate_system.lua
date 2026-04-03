@@ -8,8 +8,16 @@ local function lerp(a, b, t)
     return a + (b - a) * t
 end
 
+local function network_now()
+    if type(GetTime) == "function" then
+        return GetTime()
+    end
+
+    return os.clock()
+end
+
 function net_interpolate_system:update()
-    local now = os.clock()
+    local now = network_now()
 
     for _, e in ipairs(self.pool) do
         ---@type Animator

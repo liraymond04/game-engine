@@ -28,6 +28,7 @@ void rtc_initialize(const char **stun_servers, int stun_servers_count,
                     pthread_mutex_t *lock, pthread_cond_t *cond, int *ws_joined,
                     int *ws_ret_code);
 void rtc_handle_connection();
+void rtc_process_callbacks();
 void rtc_cleanup();
 void rtc_send_message(const char *message);
 void rtc_send_typed_object(const char *type, json_object *obj);

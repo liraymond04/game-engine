@@ -7,6 +7,14 @@ CUR_PLAYER_DATA = CUR_PLAYER_DATA or { uuid = generate_uuid() }
 
 local NETWORK_PLAYER_TIMEOUT = 3.0
 
+local function network_now()
+  if type(GetTime) == "function" then
+    return GetTime()
+  end
+
+  return os.clock()
+end
+
 local function esc(str)
   local s = tostring(str)
   s = s:gsub("\\", "\\\\")
@@ -217,7 +225,7 @@ local function ensure_network_player(req)
     local remote = NETWORK_PLAYERS[req.uuid]
     if remote then
       remote.username = req.username or remote.username
-      remote.last_seen_t = os.clock()
+      remote.last_seen_t = network_now()
     end
     return entity
   end
@@ -237,7 +245,8 @@ local function ensure_network_player(req)
   NETWORK_PLAYER_ENTITIES[req.uuid] = entity
   NETWORK_PLAYERS[req.uuid] = {
     username = req.username,
-    last_seen_t = os.clock(),
+    last_seen_t = network_now(),
+    time_offset = nil,
     position = {
       x = req.x or 0,
       y = req.y or 0,
@@ -247,15 +256,25 @@ local function ensure_network_player(req)
   return entity
 end
 
-local function push_network_snapshot(entity, req)
+local function push_network_snapshot(entity, req, remote, now)
   if not entity or not entity.net_snapshots or not req then
     return
   end
 
   local snapshots = entity.net_snapshots.buffer
-  local now = os.clock()
-  table.insert(snapshots, {
-    t = now,
+  local snapshot_t = now
+  if remote and type(req.t) == "number" then
+    if type(remote.time_offset) ~= "number" then
+      remote.time_offset = now - req.t
+    else
+      remote.time_offset = (remote.time_offset * 0.9) + ((now - req.t) * 0.1)
+    end
+
+    snapshot_t = req.t + remote.time_offset
+  end
+
+  local snapshot = {
+    t = snapshot_t,
     remote_t = req.t,
     x = req.x or entity.position.x,
     y = req.y or entity.position.y,
@@ -263,7 +282,21 @@ local function push_network_snapshot(entity, req)
     vy = req.vy or 0,
     moving = req.moving == true,
     facing_right = req.facing_right,
-  })
+  }
+
+  local inserted = false
+  for i = 1, #snapshots do
+    local current = snapshots[i]
+    if snapshot.t < current.t then
+      table.insert(snapshots, i, snapshot)
+      inserted = true
+      break
+    end
+  end
+
+  if not inserted then
+    table.insert(snapshots, snapshot)
+  end
 
   local overflow = #snapshots - entity.net_snapshots.max_size
   while overflow > 0 do
@@ -287,7 +320,7 @@ local function remove_network_player(uuid)
 end
 
 local function process_network_messages()
-  local now = os.clock()
+  local now = network_now()
 
   for i = 1, #NETWORK_INCOMING_MESSAGES do
     local req = NETWORK_INCOMING_MESSAGES[i]
@@ -303,7 +336,6 @@ local function process_network_messages()
       ensure_network_player(req)
     elseif req.action == "PLAYER_SNAPSHOT" then
       local entity = ensure_network_player(req)
-      push_network_snapshot(entity, req)
 
       local remote = NETWORK_PLAYERS[req.uuid]
       if remote then
@@ -311,6 +343,8 @@ local function process_network_messages()
         remote.position.y = req.y or remote.position.y
         remote.last_seen_t = now
       end
+
+      push_network_snapshot(entity, req, remote, now)
     elseif req.action == "PLAYER_LEFT" then
       remove_network_player(req.uuid)
     end
@@ -361,9 +395,15 @@ function networking.init(world, lobby_data)
 
   rtc_initialize(ws_url, CUR_PLAYER_DATA.uuid, room or "")
   rtc_handle_connection()
+  if rtc_process_callbacks then
+    rtc_process_callbacks()
+  end
 end
 
 function networking.update()
+  if rtc_process_callbacks then
+    rtc_process_callbacks()
+  end
   process_network_messages()
 end
 

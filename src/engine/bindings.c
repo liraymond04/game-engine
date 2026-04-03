@@ -21,6 +21,7 @@ static Color luaL_checkcolor(lua_State *L, int arg);
 static struct nk_color luaL_checknkcolor(lua_State *L, int arg);
 static struct nk_rect luaL_checknkrect(lua_State *L, int arg);
 static struct nk_vec2 luaL_checkvec2(lua_State *L, int arg);
+int _rtc_process_callbacks(lua_State *L);
 
 void Engine_BindCFunctions(Engine_t *engine) {
     engine_context = engine;
@@ -79,6 +80,7 @@ void Engine_BindCFunctions(Engine_t *engine) {
     LUA_REGISTER_FUNCTION(engine->L, rtc_check_room_exists);
     LUA_REGISTER_FUNCTION(engine->L, rtc_initialize);
     LUA_REGISTER_FUNCTION(engine->L, rtc_handle_connection);
+    LUA_REGISTER_FUNCTION(engine->L, rtc_process_callbacks);
     LUA_REGISTER_FUNCTION(engine->L, rtc_cleanup);
     LUA_REGISTER_FUNCTION(engine->L, rtc_send_message);
     LUA_REGISTER_FUNCTION(engine->L, rtc_send_typed_object);
@@ -728,6 +730,12 @@ int _rtc_handle_connection(lua_State *L) {
 #ifndef __EMSCRIPTEN__
     rtc_handle_connection();
 #endif
+
+    return 0;
+}
+
+int _rtc_process_callbacks(lua_State *L) {
+    rtc_process_callbacks();
 
     return 0;
 }
