@@ -46,10 +46,9 @@ function(fetch_and_build_project_commit TARGET_NAME GITHUB_URL COMMIT_HASH)
         set(BUILD_STATIC_LIBS ON CACHE BOOL "" FORCE) # Example customization
         set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)   # Example customization
         set(NO_MEDIA ON CACHE BOOL "" FORCE)
-        set(NO_WEBSOCKET ON CACHE BOOL "" FORCE)
-        set(USE_NICE OFF CACHE BOOL "" FORCE)
+        set(NO_WEBSOCKET OFF CACHE BOOL "" FORCE)
         set(PREFER_SYSTEM_LIB OFF CACHE BOOL "" FORCE)
-        set(USE_MBEDTLS ON CACHE BOOL "" FORCE)
+        set(USE_MBEDTLS OFF CACHE BOOL "" FORCE)
         set(USE_GNUTLS OFF CACHE BOOL "" FORCE)
     endif()
 endfunction()
