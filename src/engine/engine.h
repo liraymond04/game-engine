@@ -13,7 +13,6 @@
 #include "raylib.h"
 #include "raylib-nuklear.h"
 
-#include "log.h"
 #include "core.h"
 #include "event.h"
 #include "hooks.h"

@@ -22,8 +22,6 @@ void Engine_Init(Engine_t *engine, int canvasWidth, int canvasHeight, int scale,
 
     // Initialization
     //--------------------------------------------------------------------------------------
-    log_init();
-
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 
     InitWindow(engine->screenWidth, engine->screenHeight, window_name);
@@ -194,6 +192,4 @@ void Engine_Cleanup(Engine_t *engine) {
 
     CloseAudioDevice();
     CloseWindow();
-
-    log_free();
 }
