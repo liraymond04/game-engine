@@ -383,8 +383,8 @@ function networking.init(world, lobby_data)
   networking.world = world
   networking.lobby_data = lobby_data or {}
 
-  local host = "localhost"
-  local post = "3012"
+  local host = "mc.ramennnoodle.ca"
+  local post = "7777"
   local ws_url = string.format("ws://%s:%s", host, post)
   local room = networking.lobby_data.lobby_code
 

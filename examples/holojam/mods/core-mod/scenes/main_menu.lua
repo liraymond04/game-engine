@@ -43,16 +43,8 @@ RegisterFunction("HOOK_MAIN_MENU_PROCESS_INPUT", function()
     DebugConsole.toggle()
   end
 
-  if IsKeyPressed("KEY_R") then
-    rtc_send_message("hi")
-  end
-
   if IsKeyDown("KEY_F") then
     event_fire("TEST", "main_menu_sender")
-  end
-
-  if IsKeyDown("KEY_G") then
-    print(bg)
   end
 
   if IsKeyPressed("KEY_M") then

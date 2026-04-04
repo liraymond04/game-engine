@@ -54,7 +54,7 @@ RegisterFunction("HOOK_LOBBY_MENU_DRAW", function()
       Engine_Mod_Scene_Switch("MAIN_MENU")
     end
     if nk_button_label("join") then
-      rtc_check_room_exists("ws://localhost:3012", "room_check", LOBBY_DATA.lobby_code, function(exists)
+      rtc_check_room_exists("ws://mc.ramennnoodle.ca:7777", "room_check", LOBBY_DATA.lobby_code, function(exists)
         if exists == 1 then
           join_msg = 1
           print("Found room")
