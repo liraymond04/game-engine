@@ -19,8 +19,8 @@ endif()
 function(fetch_and_build_project TARGET_NAME URL)
     FetchContent_Declare(
         ${TARGET_NAME}
-        URL ${URL}
         DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        URL ${URL}
     )
     FetchContent_GetProperties(${TARGET_NAME})
     if (NOT ${TARGET_NAME}_POPULATED)
